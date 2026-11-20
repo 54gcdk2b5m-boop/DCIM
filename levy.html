@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Community Levy Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: two columns on desktop. Site inputs on the left, the case for a levy on the right, with the headline comparison first. Stacks on phones. */
+:root{
+  --bg:#f3f6f5; --surface:#ffffff; --sunk:#e8eeec; --fg:#14211d; --muted:#596964; --line:#d5dfdb;
+  --accent:#0f7a66; --accent-soft:#d9eee8; --ask:#0f7a66; --bench:#8aa29b; --cost:#c2552f; --cost-soft:#f6dfd5;
+  --warn:#9a6a00; --warn-bg:#fbefd2;
+  --c-econ:#a66a00; --c-res:#2f6fb8; --c-env:#1f7a3f; --c-cult:#7a4fa8; --good:#1f7a3f; --good-bg:#e1f2e6;
+  --display:"Archivo",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1513; --surface:#151f1c; --sunk:#1b2723; --fg:#e3ebe8; --muted:#97a8a2; --line:#2a3833;
+  --accent:#4cc2a8; --accent-soft:#17382f; --ask:#4cc2a8; --bench:#6d827c; --cost:#f08a5d; --cost-soft:#3a2219;
+  --warn:#e8c46a; --warn-bg:#3a2f12; --c-econ:#f0b04a; --c-res:#6aa8f0; --c-env:#7bd69a; --c-cult:#c39af0; --good:#7bd69a; --good-bg:#17331f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1513; --surface:#151f1c; --sunk:#1b2723; --fg:#e3ebe8; --muted:#97a8a2; --line:#2a3833;
+  --accent:#4cc2a8; --accent-soft:#17382f; --ask:#4cc2a8; --bench:#6d827c; --cost:#f08a5d; --cost-soft:#3a2219;
+  --warn:#e8c46a; --warn-bg:#3a2f12; --c-econ:#f0b04a; --c-res:#6aa8f0; --c-env:#7bd69a; --c-cult:#c39af0; --good:#7bd69a; --good-bg:#17331f; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px;margin:0}
+html{color-scheme:light}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(26px,3.6vw,36px);font-weight:800}
+h2{font-size:19px;font-weight:600}
+h3{font-size:13px;font-family:var(--mono);font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+p{margin:0}
+.lede{color:var(--muted);max-width:720px;font-size:16px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.grid{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+form{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:18px}
+@media (min-width:861px){form{position:sticky;top:max(16px,env(safe-area-inset-top,0px))}}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+legend{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);padding:0;margin-bottom:6px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:500}
+label small{font-weight:400;color:var(--muted);font-size:12px}
+input[type=number],select{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:100%}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{flex-direction:row;align-items:center;gap:8px;font-weight:400}
+.check input{width:16px;height:16px;accent-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.out{display:flex;flex-direction:column;gap:22px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.headline{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:baseline}
+.big{font-family:var(--display);font-weight:800;font-size:clamp(30px,4.6vw,44px);color:var(--ask);font-variant-numeric:tabular-nums}
+.vs{font-size:15px;color:var(--muted);max-width:520px}
+.vs b{color:var(--cost)}
+.chart svg{display:block;width:100%;height:auto}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.chart .lbl{font-family:var(--body);font-size:12.5px;fill:var(--fg)}
+.chart .val{fill:var(--fg);font-size:11.5px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tile{background:var(--surface);padding:14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--display);font-weight:600;font-size:22px;font-variant-numeric:tabular-nums}
+.tile .s{font-size:12px;color:var(--muted)}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.cat{border-top:3px solid var(--accent);background:var(--surface);border-radius:0 0 8px 8px;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cat ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+.src{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;background:var(--warn-bg);color:var(--warn)}
+.note{font-size:12.5px;color:var(--muted)}
+.letter{font-family:var(--body);font-size:14px;background:var(--sunk);border-radius:6px;padding:14px 16px;white-space:pre-wrap;max-height:360px;overflow:auto;border:1px solid var(--line)}
+button{font:inherit;font-weight:600;font-size:14px;padding:9px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer;align-self:flex-start}
+button:hover{filter:brightness(1.08)}
+.status{font-size:13px;color:var(--accent);min-height:1.2em}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+a{color:var(--accent)}
+.sitenav{max-width:1180px;margin:0 auto 32px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:14px;border-bottom:1px solid var(--line)}
+.sitenav .brand{font-family:var(--display);font-weight:800;font-size:16px;color:var(--fg);text-decoration:none;margin-right:auto}
+.sitenav .brand span{color:var(--accent)}
+.sitenav nav{display:flex;flex-wrap:wrap;gap:4px}
+.sitenav nav a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:6px}
+.sitenav nav a:hover{color:var(--fg);background:var(--sunk)}
+.sitenav nav a[aria-current]{color:var(--accent);background:var(--accent-soft);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{flex-direction:row;align-items:center;font-weight:500;font-size:13px;padding:6px 11px;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--bg)}
+.seg label:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.seg label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+tr.sel td{background:var(--accent-soft);font-weight:600}
+details.work{border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+details.work summary{cursor:pointer;padding:9px 12px;font-weight:600;font-size:14px;color:var(--accent)}
+details.work ol{margin:0;padding:4px 14px 12px 34px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+details.work code{font-family:var(--mono);font-size:12.5px;background:var(--sunk);padding:1px 5px;border-radius:4px}
+.deal{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px 18px}
+.verdict{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.verdict b{font-family:var(--display);font-size:26px;font-weight:800}
+.vd{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.vd-1{background:var(--cost-soft);color:var(--cost)} .vd-2{background:var(--warn-bg);color:var(--warn)} .vd-3{background:var(--good-bg);color:var(--good)}
+.sec{display:flex;flex-direction:column;gap:18px;scroll-margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.sec-head{display:flex;flex-direction:column;gap:8px;max-width:780px}
+.sec-head h2{font-size:clamp(24px,3vw,32px);font-weight:800}
+.sec-head p{color:var(--muted)}
+.cmp-h{font-family:var(--display);font-size:18px;font-weight:800;margin:0;color:var(--fg);text-transform:none;letter-spacing:0}
+.method-link{font-weight:600}
+/* ---------- 4. Explorer ---------- */
+.ex{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.ex{grid-template-columns:minmax(0,1fr)}}
+.ex-ctl{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:2px}
+@media (min-width:901px){.ex-ctl{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}}
+.ctl{padding:8px 10px;border-radius:6px;border:1px solid transparent;display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:background .15s,border-color .15s}
+.ctl:hover{background:var(--sunk)}
+.ctl.sel{border-color:var(--accent);background:var(--accent-soft)}
+.ctl .nm{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;font-weight:600}
+.ctl output{font-family:var(--mono);font-weight:500;font-size:12.5px}
+.ctl .dots{display:inline-flex;gap:3px;margin-left:6px}
+.ctl .dots i{width:8px;height:8px;border-radius:50%;background:var(--cc)}
+.ctl input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.ctl select{font:inherit;font-size:13px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:5px 6px;width:100%}
+.ctl label.ck{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400}
+.ctl label.ck input{accent-color:var(--accent);width:16px;height:16px}
+.ex-out{display:flex;flex-direction:column;gap:16px;min-width:0}
+.mx-wrap{overflow-x:auto}
+table.mx{border-collapse:collapse;width:100%;font-size:13.5px}
+.mx th,.mx td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:center}
+.mx th{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:500;color:var(--cc,var(--muted))}
+.mx th:first-child,.mx td:first-child{text-align:left}
+.mx tr.sel td{background:var(--accent-soft)}
+.mx button.vn{font:inherit;font-weight:600;background:none;border:0;padding:2px 0;color:var(--fg);cursor:pointer;text-align:left}
+.mx button.vn:hover{color:var(--accent)}
+.mx svg{display:block;margin:0 auto}
+.sweep{border-left:4px solid var(--accent)}
+.sweep h3{font-family:var(--display);font-size:20px;font-weight:800;color:var(--fg);text-transform:none;letter-spacing:0}
+.sweep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.sw{border-top:3px solid var(--cc);padding-top:6px;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.sw .h{font-weight:700;color:var(--cc)}
+.sw .none{color:var(--muted)}
+.sw .r{display:flex;justify-content:space-between;gap:8px}
+.sw .r span:last-child{font-family:var(--mono);font-size:12px;text-align:right}
+.excats{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.excat{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--cc);border-radius:0 0 8px 8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.excat h4{margin:0 0 4px;font-family:var(--display);font-size:17px;font-weight:800;color:var(--cc)}
+.m{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:7px 8px;border-radius:6px;transition:opacity .2s,background .2s}
+.m .mn{font-size:13px;color:var(--muted)}
+.m .mv{font-family:var(--display);font-weight:600;font-size:17px;text-align:right;font-variant-numeric:tabular-nums}
+.m .ms{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.m.hl{background:var(--accent-soft)}
+.lvl{display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:999px}
+.lvl-1{background:var(--accent-soft);color:var(--accent)}
+.lvl-2{background:color-mix(in srgb,var(--c-econ) 18%,var(--surface));color:var(--c-econ)}
+.lvl-3{background:color-mix(in srgb,var(--cost) 18%,var(--surface));color:var(--cost)}
+@media (prefers-reduced-motion:reduce){.ctl,.m,.toc a{transition:none}}
+
+
+</style>
+</head>
+<body>
+<header class="sitenav">
+  <a class="brand" href="index.html">Data Centre <span>Community Toolkit</span></a>
+  <nav aria-label="Site"><a href="index.html">Understand</a><a href="residents.html">For residents</a><a href="levy.html" aria-current="page">For councils</a><a href="methods.html">How it's calculated</a></nav>
+</header>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:10px">
+  <span class="eyebrow">Levy calculator · for councils and parish bodies</span>
+  <h1>How much should the community levy be?</h1>
+  <p class="lede">Estimate what a proposed UK data centre will use and emit, put a price on it with the government's own figures, and set a community levy against that cost. The UK Data Centre Covenant asks strategic sites for a Local Benefit Plan "linked to the development's size" but sets no formula. This gives you one, and <a class="method-link" href="methods.html">shows exactly how every number is worked out</a>.</p>
+</header>
+
+<div class="grid">
+<form id="f" novalidate>
+  <fieldset>
+    <legend>Site</legend>
+    <label for="proj">UK project <small>40 tracker projects with a published capacity, or enter your own</small>
+      <select id="proj"></select></label>
+    <div class="row2">
+      <label for="mw">Capacity (MW)<input id="mw" type="number" min="1" step="1" value="100"></label>
+      <label for="mwType">The MW figure is<select id="mwType"><option value="facility">total site power</option><option value="it">IT load only</option></select></label>
+    </div>
+    <label for="region">Grid region <small>NESO network area. Prefilled as a best guess, so check it.</small><select id="region"></select></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Design</legend>
+    <label for="cooling">Cooling<select id="cooling">
+      <option value="2.09">Evaporative (water-cooled chiller)</option>
+      <option value="1.16">Hybrid (air economiser + water)</option>
+      <option value="0.05">Closed loop / air-cooled</option></select></label>
+    <div class="row2">
+      <label for="lf">How hard it runs: <span id="lfOut">55%</span><input id="lf" type="range" min="30" max="90" step="5" value="55"></label>
+      <label for="pue">PUE <small>only used for IT load</small><input id="pue" type="number" min="1" max="2" step="0.01" value="1.3"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Local effects</legend>
+    <label class="check" for="gb"><input id="gb" type="checkbox"> Green belt or grey belt site</label>
+    <label class="check" for="her"><input id="her" type="checkbox"> Affects a listed building or its setting</label>
+    <label class="check" for="land"><input id="land" type="checkbox"> Landscape or visual harm</label>
+    <label class="check" for="farm"><input id="farm" type="checkbox"> Loss of farmland</label>
+    <label class="check" for="homes"><input id="homes" type="checkbox"> Homes within 500 m (generator noise)</label>
+    <div class="row2">
+      <label for="units">Habitat units to replace <small>from the BNG metric</small><input id="units" type="number" min="0" step="0.5" value="0"></label>
+      <label for="tier">Credit tier<select id="tier">
+        <option value="42000">A1 £42k</option><option value="48000">A2 £48k</option><option value="66000">A3 £66k</option>
+        <option value="125000">A4 £125k</option><option value="650000">A5 £650k</option><option value="44000">H £44k</option><option value="230000">W £230k</option></select></label>
+    </div>
+    <div class="row2">
+      <label class="check" for="sub"><input id="sub" type="checkbox"> New substation</label>
+      <label for="km">New overhead line (km)<input id="km" type="number" min="0" step="0.5" value="0"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Setting the levy</legend>
+    <div class="seg" role="radiogroup" aria-label="How to set the levy">
+      <label><input type="radio" name="method" value="rate" checked>Per MW rate</label>
+      <label><input type="radio" name="method" value="share">Share of carbon cost</label>
+      <label><input type="radio" name="method" value="hh">Per household</label>
+    </div>
+    <label for="rate" id="L-rate">Annual levy: <span id="rateOut">£5,000</span> per MW <small>£5,000 is the proposed legal minimum for onshore wind</small>
+      <input id="rate" type="range" min="0" max="50000" step="500" value="5000"></label>
+    <label for="share" id="L-share" hidden>Cover <span id="shareOut">10%</span> of the site's carbon cost <small>at the government's central carbon value</small>
+      <input id="share" type="range" min="1" max="100" step="1" value="10"></label>
+    <label for="target" id="L-target" hidden>Target per household (£ a year)<input id="target" type="number" min="0" step="10" value="150"></label>
+    <label for="hh">Households in the benefit area <small>parish, ward or town the fund serves</small><input id="hh" type="number" min="1" step="100" value="8000"></label>
+    <div class="row2">
+      <label for="years">Agreement length (years)<input id="years" type="number" min="1" max="40" step="1" value="25"></label>
+      <label for="idx">Index-linked at (% a year)<input id="idx" type="number" min="0" max="10" step="0.5" value="2"></label>
+    </div>
+  </fieldset>
+</form>
+
+<div class="out">
+  <section class="panel" aria-live="polite">
+    <h3>Annual levy against the carbon cost</h3>
+    <div class="headline"><span class="big" id="askBig">£0</span><p class="vs" id="vsText"></p></div>
+    <div class="chart" id="chart" role="img" aria-label="Bar chart comparing the levy with benchmarks and the carbon cost"></div>
+    <p class="note">Carbon cost uses the UK government's appraisal values for 2026 (low £132, central £264, high £396 per tonne, 2020 prices) on the region's 12-month average grid carbon. It is a cost to society, not a charge anyone has to pay.</p>
+    <details class="work" id="working"><summary>Show the working for this site</summary><ol id="workSteps"></ol></details>
+  </section>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="panel">
+    <h2>Compare the three approaches</h2>
+    <p class="note">The same site, priced three ways. Pick the one your committee can defend; the selected approach is highlighted and drives everything else on the page.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Approach</th><th>£ per MW a year</th><th>Annual levy</th><th>Per household</th><th>Share of carbon cost</th></tr></thead>
+      <tbody id="compare"></tbody></table></div>
+  </section>
+
+  <section class="panel" id="dealPanel">
+    <h2>Is it a good deal?</h2>
+    <p class="note">The levy is one part of the deal. Tick what the developer has offered so far; the first box follows the levy you set above.</p>
+    <div class="deal" id="deal"></div>
+    <div class="verdict" id="dealVerdict"></div>
+    <div id="dealNext"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:12px">
+    <h2>Impact by category</h2>
+    <div class="cats" id="cats"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Negotiation points</h2>
+    <p class="note">A starting draft for a letter to the council or developer. Edit it before sending.</p>
+    <div class="letter" id="letter" tabindex="0"></div>
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button type="button" id="copy">Copy text</button><span class="status" id="copyStatus"></span></div>
+  </section>
+
+  <section class="panel">
+    <h2>Assumptions</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Input</th><th>Value used</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Hours a year</td><td class="n">8,760</td><td></td></tr>
+        <tr><td>Load factor default</td><td class="n">55%</td><td>IEA, via Congressional Research Service R48646</td></tr>
+        <tr><td>On-site water per kWh</td><td class="n">2.09 / 1.16 / 0.05 L</td><td>Alston, Love &amp; Haider 2026, 200 MW model (derived)</td></tr>
+        <tr><td>Grid carbon</td><td class="n">12-month mean by region</td><td>NESO Carbon Intensity API, Nov 2025 to Nov 2026, CC BY 4.0</td></tr>
+        <tr><td>Carbon value</td><td class="n">£132 / £264 / £396 per t</td><td>DESNZ greenhouse gas valuation, 2026, 2020 prices</td></tr>
+        <tr><td>Wind and solar benchmarks</td><td class="n">£5,000 / £700 per MW per year</td><td>DESNZ Energy Independence Bill factsheet, Nov 2026</td></tr>
+        <tr><td>Substation, overhead line</td><td class="n">£530,000 each; £200,000 per km</td><td>DESNZ community funds for transmission, 2025</td></tr>
+        <tr><td>Biodiversity credits</td><td class="n">2 credits per unit</td><td>Defra statutory credit prices, Nov 2026</td></tr>
+        <tr><td>Jobs</td><td class="n">25–150 permanent; 100–200 county-wide</td><td>Good Jobs First via WRI; Brookings 2026 (US evidence)</td></tr>
+        <tr><td>Local heat</td><td class="n">~2 °C land surface rise</td><td>Marinoni et al. 2026 (preprint, satellite)</td></tr>
+      </tbody></table></div>
+    <p><a class="method-link" href="methods.html">How the levy is calculated, step by step →</a></p>
+    <p class="note">Not included: water used at power stations (no UK figure yet), business rates, and air quality. The full dataset with every source is in the hackathon folder as data-centre-impacts.xlsx.</p>
+  </section>
+</div>
+</div>
+
+<section class="sec" id="explore" aria-labelledby="explore-h">
+  <div class="sec-head">
+    <p class="eyebrow">Which choices drive the impacts</p>
+    <h2 id="explore-h">Change a choice, see which impacts move</h2>
+    <p>Before you negotiate, see which of the developer's choices matter most. This is separate from the levy above: set up a site here and compare.</p>
+    <p>Set up a site with the nine variables on the left. The grid shows how strongly each variable moves each impact category at your current settings. Click any variable to highlight the impacts it changes.</p>
+  </div>
+  <div class="ex">
+    <form class="ex-ctl" id="ex-ctl" aria-label="Site variables"></form>
+    <div class="ex-out">
+      <div class="panel">
+        <h3 class="lbl-h" style="font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500">How strongly each variable moves each impact · click a row</h3>
+        <div class="mx-wrap"><table class="mx" id="ex-mx"></table></div>
+        <p class="note">Circle size compares the lowest and highest setting of each variable, with the others held where you set them. Biggest circle: at least five times as large, or two levels higher.</p>
+      </div>
+      <div class="sec-head" style="gap:4px"><h3 class="cmp-h">Your site's impacts right now</h3><p class="note" id="ex-cats-note" style="font-size:14px"></p></div>
+      <div class="excats" id="ex-cats"></div>
+      <p class="note">Electricity, water and carbon follow the model in Section 3. Jobs use UK planning claims of 0.6–1 per MW. Generator noise assumes 100 dB at 1 m, one generator per 2.5 MW and open ground. Visual, air, wildlife, green belt and heritage levels are our own simple rules from distance, size and land type, meant to show direction, not to replace a planning assessment.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+const DATA = {"regions":[{"id":1,"name":"North Scotland","dno":"Scottish Hydro Electric Power Distribution","mean":6.0,"p10":0.0,"p90":4.0,"gas":1.5,"wind":94.9},{"id":2,"name":"South Scotland","dno":"SP Distribution","mean":5.3,"p10":0.0,"p90":12.0,"gas":0.8,"wind":68.2},{"id":3,"name":"North West England","dno":"Electricity North West","mean":40.4,"p10":7.0,"p90":87.0,"gas":9.1,"wind":40.6},{"id":4,"name":"North East England","dno":"NPG North East","mean":22.0,"p10":1.0,"p90":40.0,"gas":1.4,"wind":32.7},{"id":5,"name":"Yorkshire","dno":"NPG Yorkshire","mean":111.1,"p10":48.0,"p90":188.0,"gas":16.7,"wind":33.3},{"id":6,"name":"North Wales & Merseyside","dno":"SP Manweb","mean":69.3,"p10":9.0,"p90":155.0,"gas":17.0,"wind":54.5},{"id":7,"name":"South Wales","dno":"WPD South Wales","mean":259.5,"p10":73.0,"p90":380.0,"gas":65.7,"wind":22.3},{"id":8,"name":"West Midlands","dno":"WPD West Midlands","mean":112.1,"p10":21.0,"p90":235.0,"gas":26.8,"wind":38.5},{"id":9,"name":"East Midlands","dno":"WPD East Midlands","mean":171.3,"p10":66.0,"p90":293.0,"gas":37.3,"wind":29.6},{"id":10,"name":"East England","dno":"UKPN East","mean":128.6,"p10":40.0,"p90":223.0,"gas":21.8,"wind":34.6},{"id":11,"name":"South West England","dno":"WPD South West","mean":256.6,"p10":97.0,"p90":376.0,"gas":64.3,"wind":12.0},{"id":12,"name":"South England","dno":"SSE South","mean":172.6,"p10":74.0,"p90":273.0,"gas":38.6,"wind":17.0},{"id":13,"name":"London","dno":"UKPN London","mean":146.0,"p10":69.0,"p90":233.0,"gas":28.6,"wind":24.2},{"id":14,"name":"South East England","dno":"UKPN South East","mean":158.9,"p10":79.0,"p90":247.0,"gas":32.0,"wind":17.5}],"projects":[{"name":"1 Redheughs Avenue data centre, South Gyle","place":"Edinburgh","region":"Scotland","rid":2,"mw":212.42,"mwdef":"definition not published","status":"Refused","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/edinburgh-redheughs-avenue"},{"name":"AiOnX Cambridge Innovation Campus, Elean Business Park, Sutton","place":"Sutton","region":"East of England","rid":10,"mw":330.0,"mwdef":"campus build-out capacity","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/aionx-cambridge-innovation-campus-sutton"},{"name":"Bidder Street data centre, Canning Town","place":"London (Canning Town)","region":"London","rid":13,"mw":80.0,"mwdef":"IT load","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/bidder-street-canning-town"},{"name":"CX Technology Campus, Chapelcross","place":"Annan","region":"Scotland","rid":2,"mw":1000.0,"mwdef":"definition not published","status":"Planning submitted","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/chapelcross-cx-technology-campus"},{"name":"Cambois data centre campus","place":"Cambois","region":"North East","rid":4,"mw":720.0,"mwdef":"IT load","status":"Under construction","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/cambois-data-centre-campus"},{"name":"Cardiff East Park and Ride data centre campus (Curtis Hall), Llanrumney","place":"Cardiff","region":"Wales","rid":7,"mw":150.0,"mwdef":"grid-connection capacity","status":"Planning submitted","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/cardiff-east-park-and-ride-data-centre-curtis-hall"},{"name":"Cobalt Data Centre Campus (Stellium)","place":"Wallsend","region":"North East","rid":4,"mw":80.0,"mwdef":"definition not published","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/stellium-cobalt-park"},{"name":"Culham AI Growth Zone","place":"Culham","region":"South East","rid":12,"mw":100.0,"mwdef":"definition not published","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/culham-ai-growth-zone"},{"name":"CyrusOne LON2, Prologis Park Heathrow","place":"West Drayton","region":"London","rid":13,"mw":14.0,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/cyrusone-lon2-prologis-park-heathrow"},{"name":"CyrusOne Slough data centres (LON1, LON3, LON4, LON5)","place":"Slough","region":"South East","rid":12,"mw":54.0,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/cyrusone-slough-lon1-lon3-lon4-lon5"},{"name":"Data centre campus, Hayes Bridge and Heathrow Interchange","place":"Hayes","region":"London","rid":13,"mw":97.0,"mwdef":"IT load","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/hayes-bridge-heathrow-interchange-data-centre-campus"},{"name":"Data centre campus, Tudor Works, Hayes","place":"Hayes","region":"London","rid":13,"mw":31.0,"mwdef":"IT load","status":"Under construction","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/tudor-works-hayes-data-centre-campus"},{"name":"DataVita DV3, Chapelhall","place":"Chapelhall","region":"Scotland","rid":2,"mw":40.0,"mwdef":"definition not published","status":"Under construction","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/datavita-dv3-chapelhall"},{"name":"Devon Data Campus (Xlinks), near Great Torrington","place":"Great Torrington","region":"South West","rid":11,"mw":1500.0,"mwdef":"IT load","status":"Proposed","gb":false,"her":false,"land":false,"farm":true,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/xlinks-devon-data-campus"},{"name":"East Havering Data Centre Campus, North Ockendon","place":"North Ockendon","region":"London","rid":13,"mw":600.0,"mwdef":"definition not published","status":"Proposed","gb":true,"her":false,"land":false,"farm":true,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/east-havering-data-centre-campus-north-ockendon"},{"name":"Ebbsfleet AI Data Centre Campus, New Barn Road, Dartford (Clearstone)","place":"Dartford","region":"South East","rid":12,"mw":240.0,"mwdef":"IT load","status":"Proposed","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/ebbsfleet-ai-data-centre-campus-dartford"},{"name":"Elsham Tech Park, former RAF Elsham Wolds","place":"Elsham","region":"Yorkshire and the Humber","rid":5,"mw":1000.0,"mwdef":"IT load","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/elsham-tech-park"},{"name":"Global Switch London","place":"London","region":"London","rid":13,"mw":87.0,"mwdef":"definition not published","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/global-switch-london"},{"name":"GreenScale Derry Campus (formerly Atlantic Hub), Foyle Port","place":"Derry","region":"Northern Ireland","rid":null,"mw":100.0,"mwdef":"grid-connection capacity","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/atlantic-hub-foyle-port"},{"name":"Hilfield Park data centre campus (former Mercure Hotel, Tylers Way), Hertsmere (Ark Data Centres)","place":"Watford","region":"East of England","rid":10,"mw":120.0,"mwdef":"grid-connection capacity","status":"Planning submitted","gb":true,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/hilfield-park-ark-hertsmere"},{"name":"Humber Tech Park, land south of the A160, South Killingholme","place":"South Killingholme","region":"Yorkshire and the Humber","rid":5,"mw":386.0,"mwdef":"definition not published","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/humber-tech-park-south-killingholme"},{"name":"Kao Data Harlow campus (KLON-01 to KLON-03), London Road, Harlow","place":"Harlow","region":"East of England","rid":10,"mw":20.0,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/kao-data-harlow-campus"},{"name":"Kao Data Kenwood Point, Stockport","place":"Stockport","region":"North West","rid":3,"mw":40.0,"mwdef":"IT load","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/kao-data-stockport"},{"name":"Lanarkshire AI Growth Zone","place":"Airdrie","region":"Scotland","rid":2,"mw":500.0,"mwdef":"definition not published","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/lanarkshire-ai-growth-zone"},{"name":"Longmarsh Green Energy data centre campus, Tilney St Lawrence and Fincham, West Norfolk","place":"Tilney St Lawrence","region":"East of England","rid":10,"mw":1000.0,"mwdef":"definition not published","status":"Proposed","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/longmarsh-green-energy-west-norfolk"},{"name":"Manor Farm and land north of Wraysbury Reservoir","place":"Slough","region":"South East","rid":12,"mw":72.0,"mwdef":"IT load","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/manor-farm-poyle-road-slough"},{"name":"Microsoft Newport Imperial Park (CWL01), former Quinn Radiators site","place":"Newport","region":"Wales","rid":7,"mw":200.0,"mwdef":"IT load","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/microsoft-newport-imperial-park"},{"name":"NTT London 1 data centre, Yew Tree Avenue, Dagenham","place":"Dagenham","region":"London","rid":13,"mw":32.0,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/ntt-london-1-dagenham"},{"name":"North East England AI Growth Zone (Cobalt Park & Blyth)","place":"Wallsend & Blyth","region":"North East","rid":4,"mw":1100.0,"mwdef":"definition not published","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/north-east-ai-growth-zone"},{"name":"Pure DC LON01 B2, Brent Cross","place":"London (Brent Cross)","region":"London","rid":13,"mw":70.0,"mwdef":"definition not published","status":"Under construction","gb":false,"her":true,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/pure-dc-lon01-b2-brent-cross"},{"name":"SDC M40 Campus, Wapseys Wood landfill, Gerrards Cross","place":"Gerrards Cross","region":"South East","rid":12,"mw":300.0,"mwdef":"IT load","status":"Proposed","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/sdc-m40-campus-wapseys-wood"},{"name":"South Wales AI Growth Zone","place":"Bridgend","region":"Wales","rid":7,"mw":1000.0,"mwdef":"definition not published","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/south-wales-ai-growth-zone"},{"name":"Telehouse Inventory Estate data centre, East India Dock","place":"London (Blackwall)","region":"London","rid":13,"mw":65.0,"mwdef":"grid-connection capacity","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/telehouse-inventory-estate-east-india-dock"},{"name":"Telehouse West Two, London Docklands campus","place":"London (Blackwall)","region":"London","rid":13,"mw":33.0,"mwdef":"definition not published","status":"Under construction","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/telehouse-west-two-docklands"},{"name":"Thames Valley Park Data Centre, Earley","place":"Earley","region":"South East","rid":12,"mw":72.0,"mwdef":"IT load","status":"Planning submitted","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/thames-valley-park-earley"},{"name":"VIRTUS LONDON1 data centre, Enfield","place":"Enfield","region":"London","rid":13,"mw":4.2,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/virtus-london1-enfield"},{"name":"VIRTUS LONDON2, Hayes","place":"Hayes","region":"London","rid":13,"mw":12.3,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/virtus-london2-hayes"},{"name":"VIRTUS Slough campus (LONDON3, 4, 9, 10, 11, 12 and 19), Slough Trading Estate","place":"Slough","region":"South East","rid":12,"mw":145.5,"mwdef":"IT load","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/virtus-slough-campus"},{"name":"Vantage CWL2 campus, Bro Tathan, St Athan","place":"St Athan","region":"Wales","rid":7,"mw":120.0,"mwdef":"definition not published","status":"Approved","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/vantage-cwl2-st-athan"},{"name":"Yondr London campus (former Uxbridge Road gas works and AkzoNobel paint factory), Slough","place":"Slough","region":"South East","rid":12,"mw":100.0,"mwdef":"campus build-out capacity","status":"Operational","gb":false,"her":false,"land":false,"farm":false,"url":"https://aienergyintelligence.co.uk/uk-data-centre-tracker/yondr-london-campus-slough"}]};
+const CV = {low:132, central:264, high:396};
+const $ = id => document.getElementById(id);
+const gbp = v => {
+  const a = Math.abs(v);
+  if (a >= 1e9) return '£' + (v/1e9).toFixed(1) + 'bn';
+  if (a >= 1e6) return '£' + (v/1e6).toFixed(a >= 1e7 ? 1 : 2) + 'm';
+  if (a >= 1e3) return '£' + Math.round(v/1e3).toLocaleString('en-GB') + 'k';
+  return '£' + Math.round(v).toLocaleString('en-GB');
+};
+const num = (v, d=0) => Number(v).toLocaleString('en-GB', {maximumFractionDigits:d, minimumFractionDigits:0});
+const sig = (v, n=3) => { if (!v) return '0'; const d = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.abs(v))) + 1 - n)); return num(Math.round(v / d) * d); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// populate selects
+$('region').innerHTML = DATA.regions.map(r => `<option value="${r.id}">${esc(r.name)} · ${num(r.mean)} g/kWh</option>`).join('');
+$('proj').innerHTML = '<option value="">Custom site</option>' + DATA.projects.map((p,i) =>
+  `<option value="${i}">${esc(p.name)} (${num(p.mw)} MW)</option>`).join('');
+const cul = DATA.projects.findIndex(p => /Culham/.test(p.name));
+
+function applyProject(i){
+  const p = DATA.projects[i];
+  if (!p) return;
+  $('mw').value = p.mw;
+  $('mwType').value = /IT load/i.test(p.mwdef) ? 'it' : 'facility';
+  if (p.rid) $('region').value = p.rid;
+  $('gb').checked = p.gb; $('her').checked = p.her; $('land').checked = p.land; $('farm').checked = p.farm;
+}
+$('proj').addEventListener('change', e => { if (e.target.value !== '') applyProject(+e.target.value); calc(); });
+document.querySelectorAll('#f input, #f select').forEach(el => { if (el.id !== 'proj') el.addEventListener('input', calc); });
+$('f').addEventListener('submit', e => e.preventDefault());
+
+function calc(){
+  const mwIn = Math.max(0, +$('mw').value || 0);
+  const isIT = $('mwType').value === 'it';
+  const pue = Math.max(1, +$('pue').value || 1.3);
+  const mw = isIT ? mwIn * pue : mwIn;
+  const lf = (+$('lf').value) / 100;
+  const reg = DATA.regions.find(r => r.id === +$('region').value) || DATA.regions[0];
+  const wl = +$('cooling').value;
+  const method = document.querySelector('input[name=method]:checked').value;
+  const hh = Math.max(1, +$('hh').value || 1);
+  const idx = Math.max(0, +$('idx').value || 0) / 100;
+  const shareIn = +$('share').value / 100, target = Math.max(0, +$('target').value || 0);
+  $('L-rate').hidden = method !== 'rate'; $('L-share').hidden = method !== 'share'; $('L-target').hidden = method !== 'hh';
+  $('shareOut').textContent = Math.round(shareIn * 100) + '%';
+  const years = Math.max(1, +$('years').value || 25);
+  const units = Math.max(0, +$('units').value || 0);
+  const tier = +$('tier').value;
+  const km = Math.max(0, +$('km').value || 0);
+  const sub = $('sub').checked;
+  $('lfOut').textContent = Math.round(lf*100) + '%';
+  $('rateOut').textContent = '£' + num(+$('rate').value);
+
+  const mwh = mw * 8760 * lf;
+  const tco2 = mwh * reg.mean / 1000;
+  const cost = {low: tco2*CV.low, central: tco2*CV.central, high: tco2*CV.high};
+  const m3 = mwh * wl;                // L/kWh x kWh / 1000 = m3 ; mwh*1000*wl/1000
+  const pools = m3 / 2500;
+  const mwSafe = Math.max(mw, 1e-9);
+  const RATES = { rate: +$('rate').value, share: cost.central * shareIn / mwSafe, hh: target * hh / mwSafe };
+  const rate = Math.round(RATES[method] / 10) * 10;
+  const ask = rate * mw;
+  let lifetime = 0; for (let t = 0; t < years; t++) lifetime += ask * Math.pow(1 + idx, t);
+  const perHH = ask / hh;
+  const NAMES = { rate: 'Per MW rate (benchmark)', share: `Cover ${Math.round(shareIn*100)}% of carbon cost`, hh: `£${num(target)} per household` };
+  $('compare').innerHTML = [...Object.keys(RATES), 'wind', 'solar'].map(k => {
+    const r = k === 'wind' ? 5000 : k === 'solar' ? 700 : RATES[k], a = r * mw;
+    const name = k === 'wind' ? 'Onshore wind minimum (proposed)' : k === 'solar' ? 'Solar minimum (proposed)' : NAMES[k];
+    return `<tr class="${k === method ? 'sel' : ''}"><td>${name}</td><td class="n">£${num(Math.round(r/10)*10)}</td><td class="n">${gbp(a)}</td><td class="n">${gbp(a / hh)}</td><td class="n">${cost.central > 0 ? (a / cost.central * 100).toFixed(1) + '%' : '–'}</td></tr>`;
+  }).join('');
+  const wind = 5000 * mw, solar = 700 * mw;
+  const oneOff = (sub ? 530000 : 0) + km * 200000;
+  const bng = units * 2 * tier;
+  const share = cost.central > 0 ? ask / cost.central : 0;
+  const askFor = (frac) => cost.central * frac / Math.max(mw, 1e-9);
+
+  $('askBig').textContent = gbp(ask) + ' a year';
+  // the working, with this site's numbers
+  const mwhLo = mw * 8760 * 0.4, mwhHi = mw * 8760 * 0.8;
+  const methodStep = method === 'rate' ? `You chose a flat rate: <code>£${num(rate)} per MW</code>.`
+    : method === 'share' ? `You chose to cover ${Math.round(shareIn * 100)}% of the carbon cost: <code>${gbp(cost.central)} × ${Math.round(shareIn * 100)}% ÷ ${num(mw, 1)} MW = £${num(rate)} per MW</code>.`
+    : `You chose £${num(target)} per household: <code>£${num(target)} × ${num(hh)} households ÷ ${num(mw, 1)} MW = £${num(rate)} per MW</code>.`;
+  $('workSteps').innerHTML = [
+    isIT ? `Site power: <code>${num(mwIn)} MW of servers × PUE ${pue} = ${num(mw, 1)} MW</code>. PUE adds cooling and power losses.` : `Site power: <code>${num(mw, 1)} MW</code>, taken as total site power.`,
+    `Electricity a year: <code>${num(mw, 1)} MW × 8,760 hours × ${Math.round(lf * 100)}% load = ${num(mwh / 1000)} GWh</code>. At 40–80% load it would be ${num(mwhLo / 1000)}–${num(mwhHi / 1000)} GWh.`,
+    `Carbon: <code>${num(mwh / 1000)} GWh × ${num(reg.mean)} g per kWh (${esc(reg.name)}) = ${sig(tco2)} t CO₂</code>.`,
+    `Carbon cost to society: <code>${sig(tco2)} t × £264 = ${gbp(cost.central)}</code> a year (${gbp(cost.low)} at £132, ${gbp(cost.high)} at £396).`,
+    methodStep,
+    `Annual levy: <code>£${num(rate)} × ${num(mw, 1)} MW = ${gbp(ask)}</code>, which is ${(share * 100).toFixed(1)}% of the carbon cost and ${gbp(perHH)} per household.`,
+    `Over the agreement: ${years} years, rising ${num(idx * 100, 1)}% a year, <code>= ${gbp(lifetime)}</code>${oneOff ? `, plus ${gbp(oneOff)} of one-off grid funds` : ''}.`
+  ].map(x => `<li>${x}</li>`).join('');
+  // deal checklist
+  const DEAL = [
+    ['dLevy', `A levy of at least £5,000 per MW a year (yours: £${num(rate)})`, rate >= 5000, true],
+    ['dHeat', 'Waste heat offered to a local heat network', false],
+    ['dJobs', 'Local hiring and apprenticeship targets', false],
+    ['dWater', 'Closed-loop cooling or a cap on mains water', false],
+    ['dNoise', 'Noise limits and daytime-only generator tests', false],
+    ['dReport', 'Yearly public reports on energy, water and local-grid carbon', false],
+    ['dBng', 'Biodiversity gain delivered in the parish, not bought elsewhere', false],
+    ['dBrown', 'Built on brownfield land, not fields or green belt', !$('gb').checked && !$('farm').checked],
+    ['dPower', 'New renewable power added to the grid, not just certificates', false],
+    ['dBoard', 'Residents help decide how the fund is spent', false]
+  ];
+  if (!$('deal').children.length) {
+    $('deal').innerHTML = DEAL.map(([id, t, on, auto]) => `<label class="check" for="${id}"><input id="${id}" type="checkbox" ${on ? 'checked' : ''} ${auto ? 'disabled' : ''}> ${t}</label>`).join('');
+    $('deal').addEventListener('input', calc);
+  }
+  $('dLevy').checked = rate >= 5000;
+  $('deal').querySelector('label[for=dLevy]').lastChild.textContent = ` A levy of at least £5,000 per MW a year (yours: £${num(rate)})`;
+  const got = DEAL.filter(([id]) => $(id).checked), missing = DEAL.filter(([id]) => !$(id).checked);
+  const dv = got.length >= 7 ? 3 : got.length >= 4 ? 2 : 1;
+  $('dealVerdict').innerHTML = `<b>${got.length} of ${DEAL.length}</b><span class="vd vd-${dv}">${['', 'Weak deal', 'Fair deal', 'Strong deal'][dv]}</span><span class="note">Strong means 7 or more. This is a checklist, not a legal test.</span>`;
+  $('dealNext').innerHTML = missing.length ? `<p class="note" style="margin-top:6px">Still to ask for:</p><ul style="margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:3px;font-size:14px">${missing.map(([, t]) => `<li>${t.replace(/ \(yours.*\)/, '')}</li>`).join('')}</ul>` : '';
+  $('vsText').innerHTML = cost.central > 0
+    ? `That is <b>${(share*100).toFixed(share < 0.1 ? 1 : 0)}%</b> of the site's estimated carbon cost of ${gbp(cost.central)} a year in ${esc(reg.name)}. Covering 10% of it would mean about £${num(Math.round(askFor(0.1)/100)*100)} per MW.`
+    : 'Enter a capacity to see the comparison.';
+
+  drawChart([
+    {label:'Solar benchmark', v:solar, col:'var(--bench)'},
+    {label:'Onshore wind benchmark', v:wind, col:'var(--bench)'},
+    {label:'Your levy', v:ask, col:'var(--ask)'},
+    {label:'Carbon cost to society', v:cost.central, lo:cost.low, hi:cost.high, col:'var(--cost)'}
+  ]);
+
+  const facNote = isIT ? `${num(mwIn)} MW IT × PUE ${pue} = ${num(mw,1)} MW site` : `${num(mw)} MW site`;
+  $('tiles').innerHTML = [
+    ['Electricity', num(mwh/1000,0) + ' GWh', `${facNote}; ${num(mw * 8760 * 0.4 / 1000)}–${num(mw * 8760 * 0.8 / 1000)} GWh at 40–80% load`],
+    ['Carbon', sig(tco2) + ' t', `${num(reg.mean)} g/kWh, ${esc(reg.name)}; ${sig(mw * 8760 * 0.4 * reg.mean / 1000)}–${sig(mw * 8760 * 0.8 * reg.mean / 1000)} t at 40–80% load`],
+    ['On-site water', sig(m3) + ' m³', `about ${sig(pools,2)} Olympic pools`],
+    ['Per household', gbp(perHH), `${num(hh)} households, £${num(rate)}/MW`],
+    ['Lifetime levy', gbp(lifetime + oneOff), `${years} years at ${num(idx*100,1)}% indexation, plus one-off items`],
+  ].map(t => `<div class="tile"><span class="k">${t[0]}${/Lifetime/.test(t[0]) ? '' : ' / yr'}</span><span class="v">${t[1]}</span><span class="s">${t[2]}</span></div>`)
+   .join('');
+
+  const culture = [];
+  if ($('gb').checked) culture.push('Green or grey belt site. Three recent appeals decided by the Secretary of State approved data centres in the green belt, so harm is rarely enough to stop a scheme. It is a strong reason to ask for compensation.');
+  if ($('her').checked) culture.push('Harm to a listed building or its setting. Court Lane, Iver was refused partly over the setting of a Grade II listed farmhouse.');
+  if ($('land').checked) culture.push('Landscape or visual harm. The Abbots Langley applicant rated its own landscape effect "moderate adverse".');
+  if ($('farm').checked) culture.push('Loss of farmland. Loss of best and most versatile land was a stated harm at Abbots Langley.');
+  if ($('homes').checked) culture.push('Homes nearby. Backup diesel generators run at 85–100 dB. Ask for noise limits, as Lancaster PA secured.');
+  if (!culture.length) culture.push('No local effects ticked. Check the green belt map, Historic England\'s list and the site plan.');
+
+  const cats = [
+    ['Economic', [
+      'Permanent jobs: usually 25–150, even at the largest US sites <span class="src">G10</span>',
+      'County-wide: 100–200 jobs over a decade, no measurable wage rise <span class="src">S14</span>',
+      'Construction: up to ~1,500 workers at peak for 12–18 months <span class="src">G06</span>',
+      '<span class="pill">US evidence</span> UK local job data is on Nomis'
+    ]],
+    ['Resources', [
+      `Electricity: ${num(mwh/1000,0)} GWh a year <span class="src">calc</span>`,
+      `On-site water: ${sig(m3)} m³ a year with this cooling <span class="src">S04</span>`,
+      wl > 1 ? 'Closed-loop cooling would cut on-site water by about 97% but use about 32% more electricity <span class="src">S04</span>' : 'Closed-loop cooling keeps on-site water low; its extra electricity use shows up in carbon <span class="src">S04</span>',
+      '<span class="pill">gap</span> Water used at power stations is not counted'
+    ]],
+    ['Environment', [
+      `Carbon: ${sig(tco2)} t a year on the ${esc(reg.name)} grid <span class="src">D03</span>`,
+      `Grid mix here: ${num(reg.gas,0)}% gas, ${num(reg.wind,0)}% wind on average <span class="src">D03</span>`,
+      'Local heat: land surface about 2 °C warmer after AI sites open <span class="src">S21</span>',
+      'Renewable certificates do not stop grid emissions rising <span class="src">S13</span>'
+    ]],
+    ['Cultural', culture.map(c => esc(c))],
+    ['Nature', [
+      'England requires a 10% gain in habitat for major development <span class="src">G17</span>',
+      units > 0 ? `${num(units,1)} units bought as statutory credits: ${gbp(bng)} <span class="src">G17</span>` : 'Enter habitat units from the developer\'s BNG metric to price credits',
+      'Ask for the gain to be delivered locally, not bought as credits elsewhere'
+    ]],
+  ];
+  $('cats').innerHTML = cats.map(c => `<div class="cat"><h3>${c[0]}</h3><ul>${c[1].map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('');
+
+  const projSel = $('proj').value !== '' ? DATA.projects[+$('proj').value] : null;
+  const siteName = projSel ? projSel.name : 'the proposed data centre';
+  const lines = [
+    `Re: Local Benefit Plan for ${siteName}`,
+    '',
+    `Under the UK Data Centre Covenant (October 2026), strategic data centres should agree a Local Benefit Plan linked to the development's size, on top of Section 106 and the Community Infrastructure Levy. We propose the plan is set as follows.`,
+    '',
+    `1. An annual community levy of £${num(rate)} per MW, ${gbp(ask)} a year for a ${num(mw)} MW site, index-linked for ${years} years (about ${gbp(perHH)} a year for each of the ${num(hh)} households in the benefit area). The proposed legal minimum for an onshore wind farm is £5,000 per MW a year.`,
+    `2. Our estimate is that the site will use ${num(mwh/1000,0)} GWh of electricity and emit about ${sig(tco2)} tonnes of CO2 a year on the ${reg.name} grid. At the government's central carbon value that is ${gbp(cost.central)} a year of cost to society (range ${gbp(cost.low)} to ${gbp(cost.high)}). The levy above covers ${(share*100).toFixed(1)}% of it.`,
+    `3. On-site water use of about ${sig(m3)} m³ a year with the cooling proposed. We ask for annual published water and energy reports, as the Covenant expects, and a cap on mains water use (Lancaster PA set 20,000 US gallons a day per campus).`,
+  ];
+  let n = 4;
+  if (oneOff > 0) lines.push(`${n++}. One-off grid infrastructure funds in line with DESNZ guidance: ${sub ? '£530,000 for the new substation' : ''}${sub && km ? ' and ' : ''}${km ? `£${num(km*200000)} for ${num(km,1)} km of overhead line` : ''}.`);
+  if (units > 0) lines.push(`${n++}. Biodiversity net gain delivered within the parish or district. Buying the ${num(units,1)} units as statutory credits would cost ${gbp(bng)}; we ask that this value is spent locally instead.`);
+  lines.push(`${n++}. Waste heat offered to nearby homes, schools or businesses wherever a user exists, and a design PUE of 1.3 or better, both as set out in the Covenant.`);
+  lines.push(`${n++}. Emissions reported on the local grid mix, not netted off with renewable certificates.`);
+  const ticked = culture.filter(c => !/^No local effects/.test(c));
+  if (ticked.length) lines.push(`${n++}. Compensation for local harm: ${ticked.map(c => c.split('.')[0].toLowerCase()).join('; ')}.`);
+  if ($('homes').checked) lines.push(`${n++}. Noise limits at the nearest homes and a cap on generator testing hours.`);
+  lines.push('', 'Figures are estimates from public data and published research. We would welcome the developer\'s own figures for each item.');
+  $('letter').textContent = lines.join('\n');
+}
+
+function drawChart(rows){
+  const W = 720, L = 190, R = 90, rowH = 38, top = 6, H = top + rows.length*rowH + 26;
+  const max = Math.max(1, ...rows.map(r => r.hi || r.v)) * 1.02;
+  const x = v => L + v/max*(W-L-R);
+  const step = niceStep(max);
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  for (let t = 0; t <= max; t += step) {
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="${top}" y2="${H-22}" stroke="var(--line)" stroke-width="1"/><text x="${x(t)}" y="${H-6}" text-anchor="middle">${gbp(t)}</text>`;
+  }
+  rows.forEach((r,i) => {
+    const y = top + i*rowH, w = Math.max(2, x(r.v) - L);
+    s += `<text class="lbl" x="${L-10}" y="${y+22}" text-anchor="end">${r.label}</text>`;
+    s += `<rect x="${L}" y="${y+9}" width="${w}" height="18" rx="2" fill="${r.col}"><title>${r.label}: ${gbp(r.v)}</title></rect>`;
+    let vx = L + w + 6;
+    if (r.hi) {
+      s += `<line x1="${x(r.lo)}" x2="${x(r.hi)}" y1="${y+18}" y2="${y+18}" stroke="var(--fg)" stroke-width="1.5"/>`
+         + `<line x1="${x(r.lo)}" x2="${x(r.lo)}" y1="${y+12}" y2="${y+24}" stroke="var(--fg)" stroke-width="1.5"/>`
+         + `<line x1="${x(r.hi)}" x2="${x(r.hi)}" y1="${y+12}" y2="${y+24}" stroke="var(--fg)" stroke-width="1.5"/>`;
+      vx = x(r.hi) + 6;
+    }
+    const anchor = vx > W - 70 ? 'end' : 'start';
+    const tx = anchor === 'end' ? Math.min(vx - 12, W - 4) : vx;
+    s += `<text class="val" x="${tx}" y="${anchor==='end' ? y+6 : y+22}" text-anchor="${anchor}">${gbp(r.v)}${r.hi ? ' (' + gbp(r.lo) + '–' + gbp(r.hi) + ')' : ''}</text>`;
+  });
+  $('chart').innerHTML = s + '</svg>';
+}
+function niceStep(max){
+  const raw = max / 4, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  return (m < 1.5 ? 1 : m < 3.5 ? 2.5 : m < 7.5 ? 5 : 10) * p;
+}
+
+$('copy').addEventListener('click', () => {
+  const t = $('letter').textContent;
+  const done = () => { $('copyStatus').textContent = 'Copied'; setTimeout(() => $('copyStatus').textContent = '', 2500); };
+  const fallback = () => { const r = document.createRange(); r.selectNodeContents($('letter')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); $('copyStatus').textContent = 'Text selected. Press Ctrl+C or ⌘C to copy.'; };
+  try { navigator.clipboard.writeText(t).then(done, fallback); } catch (e) { fallback(); }
+});
+
+if (cul >= 0) { $('proj').value = cul; applyProject(cul); }
+calc();
+</script>
+
+<script>
+// Explorer moved from the home page. The block scope keeps its helpers apart from the levy calculator's.
+{
+const COOL = { evap: { name: "Evaporative", short: "Evaporative", wl: 2.09, em: 1 },
+               hybrid: { name: "Hybrid", short: "Hybrid", wl: 1.16, em: 2.76 / 3.08 },
+               closed: { name: "Closed loop / air", short: "Closed loop", wl: 0.05, em: 4.06 / 3.08 } };
+const REGS = DATA.regions.map(r => ({ ...r, g: r.mean }));
+const REG = new Map(REGS.map(r => [r.id, r]));
+const regSorted = REGS.slice().sort((a, b) => a.g - b.g);
+const LONDON = REGS.find(r => /London/.test(r.name));
+const HOURS = 8760, HA_PER_MW = 0.19, M2_PER_MW = 530, HOME_KWH = 2700;
+const model = v => { const e = v.mw * HOURS * v.lf * v.pue * COOL[v.cool].em, co2 = e * REG.get(v.rid).g / 1000;
+  return { elec: e, co2, cost: co2 * v.cv, water: e * COOL[v.cool].wl }; };
+const fE = mwh => mwh >= 1e6 ? (mwh / 1e6).toFixed(2) + " TWh" : mwh >= 1000 ? sig(mwh / 1000) + " GWh" : sig(mwh) + " MWh";
+const fT = t => t >= 1e6 ? (t / 1e6).toFixed(2) + " Mt CO₂" : sig(t) + " t CO₂";
+const fW = m3 => m3 >= 1e6 ? (m3 / 1e6).toFixed(2) + " million m³" : sig(m3) + " m³";
+// ===================== Section 4: variables x impacts explorer =====================
+(() => {
+  const V = { mw: 100, lf: 0.55, pue: 1.4, cool: "evap", rid: LONDON.id, cv: CV.central, dist: 0.5, land: "green", her: false };
+  let sel = "mw";
+  const LAND = { brown: { name: "Brownfield", nat: 1, gb: 1 }, green: { name: "Greenfield farmland", nat: 2, gb: 2 }, belt: { name: "Green belt", nat: 2, gb: 3 } };
+  const CATS = [
+    { key: "econ", name: "Economic", emo: "💷", cc: "var(--c-econ)" },
+    { key: "res", name: "Resources", emo: "⚡", cc: "var(--c-res)" },
+    { key: "env", name: "Environmental", emo: "🌿", cc: "var(--c-env)" },
+    { key: "cult", name: "Cultural", emo: "🏛️", cc: "var(--c-cult)" }
+  ];
+  const fmtD = v => v < 1 ? num(Math.round(v * 1000 / 10) * 10) + " m" : num(v, 1) + " km";
+  const VARS4 = [
+    { key: "mw", name: "Size", type: "log", min: 5, max: 1500, fmt: v => num(v) + " MW", sw: [10, 1500] },
+    { key: "lf", name: "Load factor", type: "range", min: 0.3, max: 0.9, step: 0.05, fmt: v => Math.round(v * 100) + "%", sw: [0.4, 0.8] },
+    { key: "pue", name: "Efficiency (PUE)", type: "range", min: 1.05, max: 1.8, step: 0.01, fmt: v => v.toFixed(2), sw: [1.09, 1.6] },
+    { key: "cool", name: "Cooling", type: "select", opts: Object.keys(COOL).map(k => [k, COOL[k].name]), fmt: v => COOL[v].short, sw: Object.keys(COOL) },
+    { key: "rid", name: "Grid region", type: "select", opts: regSorted.map(r => [r.id, `${r.name} · ${num(r.g)} g`]), fmt: v => REG.get(+v).name, sw: DATA.regions.map(r => r.id) },
+    { key: "cv", name: "Carbon value", type: "select", opts: [[CV.low, "Low £132/t"], [CV.central, "Central £264/t"], [CV.high, "High £396/t"]], fmt: v => "£" + v + "/t", sw: [CV.low, CV.high] },
+    { key: "dist", name: "Distance to homes", type: "log", min: 0.1, max: 10, fmt: fmtD, sw: [0.2, 5] },
+    { key: "land", name: "Land type", type: "select", opts: Object.keys(LAND).map(k => [k, LAND[k].name]), fmt: v => LAND[v].name, sw: Object.keys(LAND) },
+    { key: "her", name: "Heritage nearby", type: "check", fmt: v => v ? "Yes" : "No", sw: [false, true] }
+  ];
+  const VK = Object.fromEntries(VARS4.map(v => [v.key, v]));
+  const LV = ["", "Low", "Medium", "High"];
+  const lvl = n => `<span class="lvl lvl-${n}">${LV[n]}</span>`;
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+  function compute(v) {
+    const m = model({ mw: v.mw, lf: v.lf, pue: v.pue, cool: v.cool, rid: +v.rid, cv: +v.cv });
+    const gens = Math.max(1, Math.ceil(v.mw * v.pue / 2.5)), dm = Math.max(v.dist * 1000, 1);
+    const reach = 0.5 * Math.sqrt(v.mw / 100);   // km within which the buildings dominate the view (rough)
+    const visual = clamp((v.dist < reach ? 3 : v.dist < 3 * reach ? 2 : 1) + (v.land === "belt" ? 1 : 0), 1, 3);
+    return { ...m, gens, ha: v.mw * HA_PER_MW, floor: v.mw * M2_PER_MW,
+      jobsLo: 0.6 * v.mw, jobsHi: 1.0 * v.mw, levy: 5000 * v.mw,
+      noiseCut: 100 - 20 * Math.log10(dm) + 10 * Math.log10(gens), noiseTest: 100 - 20 * Math.log10(dm),
+      air: v.dist < 0.3 ? 3 : v.dist < 1 ? 2 : 1, visual, nature: LAND[v.land].nat, gb: LAND[v.land].gb, her: v.her ? 3 : 1 };
+  }
+  // Each metric: category, label, value used to measure change, kind of change, display
+  const METRICS = [
+    { cat: "econ", name: "Permanent jobs", k: "num", val: c => c.jobsHi, show: c => `${num(Math.round(c.jobsLo))}–${num(Math.round(c.jobsHi))}`, sub: () => "UK planning claims; US sites employ 25–150" },
+    { cat: "econ", name: "Community fund at the wind benchmark", k: "num", val: c => c.levy, show: c => gbp(c.levy) + " a year", sub: () => "£5,000 per MW, if agreed" },
+    { cat: "res", name: "Electricity", k: "num", val: c => c.elec, show: c => fE(c.elec), sub: c => `a year · as much as ${num(Math.round(c.elec * 1000 / HOME_KWH / 1000) * 1000)} homes` },
+    { cat: "res", name: "On-site water", k: "num", val: c => c.water, show: c => fW(c.water), sub: c => `a year · ${num(Math.round(c.water / 120 / 10) * 10)} households' use` },
+    { cat: "res", name: "Land", k: "num", val: c => c.ha, show: c => num(c.ha, c.ha < 10 ? 1 : 0) + " ha", sub: c => `${c.ha / 16 >= 1 ? (c.ha / 16).toFixed(c.ha / 16 < 10 ? 1 : 0) + " Buckingham Palaces" : Math.round(c.ha / 16 * 100) + "% of Buckingham Palace"}` },
+    { cat: "env", name: "Carbon", k: "num", val: c => c.co2, show: c => fT(c.co2), sub: () => "a year on the local grid" },
+    { cat: "env", name: "Carbon cost to society", k: "num", val: c => c.cost, show: c => gbp(c.cost), sub: () => "a year at the chosen carbon value" },
+    { cat: "env", name: "Generator noise at homes", k: "db", val: c => c.noiseCut, show: c => `${Math.round(Math.max(0, c.noiseCut))} dB`, sub: c => `all ${num(c.gens)} running in a power cut · ${Math.round(Math.max(0, c.noiseTest))} dB for a test` },
+    { cat: "env", name: "Air quality near homes", k: "lvl", val: c => c.air, show: c => lvl(c.air), sub: () => "diesel generator testing, ~12 t NOx a year" },
+    { cat: "env", name: "Wildlife habitat lost", k: "lvl", val: c => c.nature, show: c => lvl(c.nature), sub: () => "10% net gain still required" },
+    { cat: "cult", name: "Building scale", k: "num", val: c => c.floor, show: c => num(Math.round(c.floor / 7140)) + " pitches", sub: c => `${num(Math.round(c.floor / 100) * 100)} m² of floor space` },
+    { cat: "cult", name: "Visual impact on homes", k: "lvl", val: c => c.visual, show: c => lvl(c.visual), sub: () => "from size, distance and land type" },
+    { cat: "cult", name: "Green belt and open land", k: "lvl", val: c => c.gb, show: c => lvl(c.gb), sub: () => "conflict with local plan policy" },
+    { cat: "cult", name: "Heritage setting", k: "lvl", val: c => c.her, show: c => lvl(c.her), sub: () => "listed buildings, conservation areas" }
+  ];
+  // Strength of a change across a sweep: 0 none, 1 slight, 2 clear, 3 strong
+  function strength(m, vals) {
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    if (m.k === "num") { const r = lo > 0 ? hi / lo : (hi > 0 ? Infinity : 1); return r >= 5 ? 3 : r >= 1.5 ? 2 : r > 1.01 ? 1 : 0; }
+    if (m.k === "db") { const d = hi - lo; return d >= 20 ? 3 : d >= 8 ? 2 : d > 0.5 ? 1 : 0; }
+    const d = hi - lo; return d >= 2 ? 3 : d >= 1 ? 2 : 0;
+  }
+  function sweep(vk) {
+    const vr = VK[vk];
+    const runs = vr.sw.map(o => ({ o, c: compute({ ...V, [vk]: o }) }));
+    return METRICS.map(m => {
+      const vals = runs.map(r => m.val(r.c));
+      const iLo = vals.indexOf(Math.min(...vals)), iHi = vals.indexOf(Math.max(...vals));
+      return { m, s: strength(m, vals), lo: runs[iLo], hi: runs[iHi], first: runs[0], last: runs[runs.length - 1] };
+    });
+  }
+
+  // ---- controls
+  const form = document.getElementById("ex-ctl");
+  form.innerHTML = VARS4.map(vr => {
+    let ctl = "";
+    if (vr.type === "log") ctl = `<input type="range" id="ex-${vr.key}" min="${Math.log10(vr.min)}" max="${Math.log10(vr.max)}" step="0.005" value="${Math.log10(V[vr.key])}">`;
+    else if (vr.type === "range") ctl = `<input type="range" id="ex-${vr.key}" min="${vr.min}" max="${vr.max}" step="${vr.step}" value="${V[vr.key]}">`;
+    else if (vr.type === "select") ctl = `<select id="ex-${vr.key}">${vr.opts.map(([v, l]) => `<option value="${v}" ${String(v) === String(V[vr.key]) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+    else ctl = `<label class="ck"><input type="checkbox" id="ex-${vr.key}"> A listed building or conservation area is affected</label>`;
+    return `<div class="ctl" data-var="${vr.key}"><div class="nm"><label for="ex-${vr.key}">${vr.name}<span class="dots" id="exd-${vr.key}"></span></label><output id="exo-${vr.key}"></output></div>${ctl}</div>`;
+  }).join("");
+  form.addEventListener("submit", e => e.preventDefault());
+  form.addEventListener("input", e => {
+    const vk = e.target.id.replace("ex-", ""), vr = VK[vk]; if (!vr) return;
+    V[vk] = vr.type === "log" ? (vk === "mw" ? Math.round(Math.pow(10, +e.target.value)) : Math.round(Math.pow(10, +e.target.value) * 100) / 100)
+      : vr.type === "range" ? +e.target.value : vr.type === "check" ? e.target.checked
+      : (vk === "rid" || vk === "cv") ? +e.target.value : e.target.value;
+    sel = vk; draw();
+  });
+  form.addEventListener("click", e => { const c = e.target.closest(".ctl"); if (c && c.dataset.var !== sel) { sel = c.dataset.var; draw(); } });
+  form.addEventListener("focusin", e => { const c = e.target.closest(".ctl"); if (c && c.dataset.var !== sel) { sel = c.dataset.var; draw(); } });
+
+  document.getElementById("ex-mx").addEventListener("click", e => { const b = e.target.closest("button.vn"); if (b) { sel = b.dataset.var; draw(); } });
+
+  function dot(n, cc) {
+    const r = [2.5, 5, 8, 11][n];
+    return `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="${r}" fill="${n ? cc : "var(--line)"}" fill-opacity="${n ? 0.85 : 1}"/></svg>`;
+  }
+  const WORD = ["no effect", "slight", "clear", "strong"];
+
+  function draw() {
+    const cur = compute(V);
+    const all = Object.fromEntries(VARS4.map(vr => [vr.key, sweep(vr.key)]));
+    // outputs, dots and selection on controls
+    VARS4.forEach(vr => {
+      document.getElementById("exo-" + vr.key).textContent = vr.fmt(V[vr.key]);
+      const cs = CATS.filter(c => all[vr.key].some(x => x.m.cat === c.key && x.s > 0));
+      document.getElementById("exd-" + vr.key).innerHTML = cs.map(c => `<i style="--cc:${c.cc}" title="${c.name}"></i>`).join("");
+      form.querySelector(`.ctl[data-var="${vr.key}"]`).classList.toggle("sel", vr.key === sel);
+    });
+    // matrix
+    document.getElementById("ex-mx").innerHTML =
+      `<thead><tr><th>Variable</th>${CATS.map(c => `<th style="--cc:${c.cc}"><span aria-hidden="true" style="font-size:15px">${c.emo}</span><br>${c.name}</th>`).join("")}</tr></thead><tbody>` +
+      VARS4.map(vr => `<tr class="${vr.key === sel ? "sel" : ""}"><td><button type="button" class="vn" data-var="${vr.key}">${vr.name}</button></td>` +
+        CATS.map(c => { const n = Math.max(0, ...all[vr.key].filter(x => x.m.cat === c.key).map(x => x.s));
+          return `<td title="${vr.name} → ${c.name}: ${WORD[n]}">${dot(n, c.cc)}</td>`; }).join("") + `</tr>`).join("") + `</tbody>`;
+    // plain-English summary of what the selected variable changes
+    const vr = VK[sel], sw = all[sel];
+    const plain = (m, c) => m.k === "lvl" ? LV[m.val(c)].toLowerCase() : m.show(c).replace(/<[^>]+>/g, "");
+    const opt = r => esc(String(vr.fmt(r.o)));
+    const two = vr.sw.length === 2;
+    const sentence = x => {
+      const m = x.m;
+      if (two) {
+        const a = m.val(x.first.c), b = m.val(x.last.c), up = b > a;
+        const ratio = m.k === "num" && Math.min(a, b) > 0 ? Math.max(a, b) / Math.min(a, b) : 0;
+        return `<li><b>${m.name}</b> ${up ? "goes up" : "goes down"} from ${plain(m, x.first.c)} to ${plain(m, x.last.c)}${ratio >= 1.5 ? ` (${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)} times ${up ? "more" : "less"})` : ""}.</li>`;
+      }
+      return `<li><b>${m.name}</b> is lowest with ${opt(x.lo)} (${plain(m, x.lo.c)}) and highest with ${opt(x.hi)} (${plain(m, x.hi.c)}).</li>`;
+    };
+    const hitCats = CATS.filter(c => sw.some(x => x.m.cat === c.key && x.s > 0));
+    const missCats = CATS.filter(c => !hitCats.includes(c));
+    document.getElementById("ex-cats-note").innerHTML = `The figures for the site you set up on the left. <span style="background:var(--accent-soft);padding:0 4px;border-radius:3px">Highlighted rows</span> are the ones ${esc(vr.name.toLowerCase())} changes. Click another variable to see what it changes.`;
+    // category cards
+    document.getElementById("ex-cats").innerHTML = CATS.map(c =>
+      `<div class="excat" style="--cc:${c.cc}"><h4><span aria-hidden="true">${c.emo}</span> ${c.name}</h4>${METRICS.filter(m => m.cat === c.key).map(m => {
+        const hit = sw.find(x => x.m === m).s > 0;
+        return `<div class="m ${hit ? "hl" : ""}"><span class="mn">${m.name}</span><span class="mv">${m.show(cur)}</span><span class="ms">${m.sub(cur)}</span></div>`;
+      }).join("")}</div>`).join("");
+  }
+  draw();
+})();
+
+}
+</script>
+</body>
+</html>

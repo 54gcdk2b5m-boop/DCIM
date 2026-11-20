@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>How the Levy Is Calculated</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of numbered calculation steps, each with its formula, a live worked number and its source. Same tokens as the rest of the toolkit. */
+:root{
+  --bg:#f3f6f5; --surface:#ffffff; --sunk:#e8eeec; --fg:#14211d; --muted:#596964; --line:#d5dfdb;
+  --accent:#0f7a66; --accent-soft:#d9eee8; --cost:#c2552f; --cost-soft:#f6dfd5; --warn:#9a6a00; --warn-bg:#fbefd2; --good:#1f7a3f; --good-bg:#e1f2e6;
+  --display:"Archivo",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1513; --surface:#151f1c; --sunk:#1b2723; --fg:#e3ebe8; --muted:#97a8a2; --line:#2a3833;
+  --accent:#4cc2a8; --accent-soft:#17382f; --cost:#f08a5d; --cost-soft:#3a2219; --warn:#e8c46a; --warn-bg:#3a2f12; --good:#7bd69a; --good-bg:#17331f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1513; --surface:#151f1c; --sunk:#1b2723; --fg:#e3ebe8; --muted:#97a8a2; --line:#2a3833;
+  --accent:#4cc2a8; --accent-soft:#17382f; --cost:#f08a5d; --cost-soft:#3a2219; --warn:#e8c46a; --warn-bg:#3a2f12; --good:#7bd69a; --good-bg:#17331f; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{color-scheme:light}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:64px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(28px,4.2vw,42px);font-weight:800}
+h2{font-size:22px;font-weight:800}
+h3{font-size:17px;font-weight:800}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.sitenav{max-width:1080px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:14px;border-bottom:1px solid var(--line)}
+.sitenav .brand{font-family:var(--display);font-weight:800;font-size:16px;color:var(--fg);text-decoration:none;margin-right:auto}
+.sitenav .brand span{color:var(--accent)}
+.sitenav nav{display:flex;flex-wrap:wrap;gap:4px}
+.sitenav nav a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:6px}
+.sitenav nav a:hover{color:var(--fg);background:var(--sunk)}
+.sitenav nav a[aria-current]{color:var(--accent);background:var(--accent-soft);font-weight:600}
+.wrap{max-width:820px;margin:0 auto;padding-top:36px;display:flex;flex-direction:column;gap:28px}
+.lede{color:var(--muted);font-size:17px}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-family:var(--mono);font-size:12.5px}
+.flow span{padding:4px 9px;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+.flow span.out{border-color:var(--accent);color:var(--accent);font-weight:600}
+.flow i{font-style:normal;color:var(--muted)}
+.try{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.try label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500;min-width:0}
+.try input,.try select{font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:100%}
+.try input[type=range]{padding:0;accent-color:var(--accent)}
+.try .t{grid-column:1/-1;font-size:14px;color:var(--muted)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:s}
+ol.steps>li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px 16px 58px;position:relative;display:flex;flex-direction:column;gap:8px;min-width:0}
+ol.steps>li::before{content:counter(s);position:absolute;left:16px;top:14px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--surface);font-family:var(--display);font-weight:800;display:grid;place-items:center;font-size:14px}
+.formula{font-family:var(--mono);font-size:13.5px;background:var(--sunk);border-radius:6px;padding:9px 12px;overflow-x:auto;white-space:nowrap}
+.ex{font-size:15px;border-left:3px solid var(--accent);padding-left:10px}
+.ex b{font-variant-numeric:tabular-nums}
+.src{font-size:13px;color:var(--muted)}
+.sure{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 8px;border-radius:999px;white-space:nowrap;vertical-align:1px}
+.s3{background:var(--good-bg);color:var(--good)} .s2{background:var(--accent-soft);color:var(--accent)} .s1{background:var(--warn-bg);color:var(--warn)}
+.approaches{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.ap{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:14px;min-width:0}
+.ap .formula{font-size:12.5px;white-space:normal}
+.ap .pro{color:var(--good)} .ap .con{color:var(--cost)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.panel ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cta{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:14px 16px}
+.cta a{font-weight:600}
+</style>
+</head>
+<body>
+<header class="sitenav">
+  <a class="brand" href="index.html">Data Centre <span>Community Toolkit</span></a>
+  <nav aria-label="Site"><a href="index.html">Understand</a><a href="residents.html">For residents</a><a href="levy.html">For councils</a><a href="methods.html" aria-current="page">How it's calculated</a></nav>
+</header>
+
+<main class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <p class="eyebrow">Method · levy calculator</p>
+    <h1>How the levy is calculated</h1>
+    <p class="lede">The levy calculator turns a few facts about a proposed data centre into a yearly payment to the community. Every step is ordinary arithmetic on published figures. This page shows each step, the formula, a worked example and how sure we are of each number.</p>
+    <div class="flow" aria-label="The steps in order"><span>Size (MW)</span><i>→</i><span>Electricity</span><i>→</i><span>Carbon</span><i>→</i><span>Carbon cost</span><i>→</i><span class="out">Levy rate</span><i>→</i><span class="out">Annual levy</span><i>→</i><span class="out">Lifetime total</span></div>
+    <p class="src">Confidence marks: <span class="sure s3">●●● measured</span> published or official figure · <span class="sure s2">●●○ estimate</span> our arithmetic on good data · <span class="sure s1">●○○ rough</span> an assumption or borrowed evidence; treat as a guide.</p>
+  </header>
+
+  <section class="try" aria-label="Worked example settings">
+    <p class="t"><b>Worked example.</b> Change these and every number below updates. They start at an average UK project.</p>
+    <label for="w-mw">Site power (MW)<input id="w-mw" type="number" min="1" step="1" value="100"></label>
+    <label for="w-reg">Grid region<select id="w-reg"></select></label>
+    <label for="w-lf">Load: <span id="w-lfo">55%</span><input id="w-lf" type="range" min="30" max="90" step="5" value="55"></label>
+    <label for="w-rate">Levy (£ per MW a year)<input id="w-rate" type="number" min="0" step="500" value="5000"></label>
+    <label for="w-hh">Households in the area<input id="w-hh" type="number" min="1" step="100" value="8000"></label>
+    <label for="w-yr">Years, and yearly rise<span style="display:flex;gap:6px"><input id="w-yr" type="number" min="1" max="40" value="25" aria-label="Years"><input id="w-idx" type="number" min="0" max="10" step="0.5" value="2" aria-label="Yearly rise, percent"></span></label>
+  </section>
+
+  <ol class="steps">
+    <li>
+      <h2>Start from the site's power</h2>
+      <p>Developers quote size in megawatts (MW), the most electricity the site can draw. Some quote only the servers (IT load). We convert that to total site power by adding the overhead for cooling and power losses, measured as PUE.</p>
+      <p class="formula">site MW = IT MW × PUE</p>
+      <p class="src">PUE defaults to 1.3, the figure the UK Data Centre Covenant asks new sites to meet; typical sites run 1.3–1.6. <span class="sure s2">●●○ estimate</span></p>
+    </li>
+    <li>
+      <h2>Work out the electricity it uses in a year</h2>
+      <p>No site runs flat out. The load factor is the share of its capacity it uses on average across the 8,760 hours of a year.</p>
+      <p class="formula">electricity (MWh) = site MW × 8,760 × load factor</p>
+      <p class="ex" id="x-elec"></p>
+      <p class="src">Load factor 55%, from the IEA via the US Congressional Research Service; 40–80% is the plausible range. <span class="sure s1">●○○ rough</span></p>
+    </li>
+    <li>
+      <h2>Turn electricity into carbon</h2>
+      <p>Each region's grid emits a different amount of CO₂ per unit of electricity, depending on how much comes from wind, nuclear or gas.</p>
+      <p class="formula">carbon (t CO₂) = electricity (MWh) × grid carbon (g per kWh) ÷ 1,000</p>
+      <p class="ex" id="x-co2"></p>
+      <p class="src">Grid carbon is the 12-month average for the region from the National Energy System Operator, Nov 2025 to Nov 2026 (CC BY 4.0). A large new load usually pulls in extra gas power, so the real figure is likely higher than this average. <span class="sure s2">●●○ estimate</span></p>
+    </li>
+    <li>
+      <h2>Put a price on the carbon</h2>
+      <p>The government values a tonne of CO₂ when it weighs the costs and benefits of policies. We use that value to show what the site's emissions cost society. It is not a bill anyone pays; it is a yardstick.</p>
+      <p class="formula">carbon cost (£ a year) = carbon (t) × £264</p>
+      <p class="ex" id="x-cost"></p>
+      <p class="src">DESNZ carbon values for 2026: low £132, central £264, high £396 per tonne, in 2020 prices. <span class="sure s3">●●● measured</span></p>
+    </li>
+    <li>
+      <h2>Choose how to set the levy rate</h2>
+      <p>There is no legal formula for a data centre levy. The UK Data Centre Covenant asks large sites for a Local Benefit Plan "linked to the development's size", so the calculator offers three ways to set a rate per MW:</p>
+      <div class="approaches">
+        <div class="ap"><h3>A flat rate per MW</h3><p class="formula">levy = rate × site MW</p>
+          <p class="pro">+ Simple, and comparable with wind and solar farms.</p><p class="con">− Ignores how much harm this site does.</p>
+          <p class="src">Benchmarks: onshore wind's proposed minimum is £5,000 per MW a year; solar's is £700 (DESNZ, Nov 2026). <span class="sure s3">●●●</span></p></div>
+        <div class="ap"><h3>A share of the carbon cost</h3><p class="formula">rate = carbon cost × share ÷ site MW</p>
+          <p class="pro">+ Grows with the harm: dirtier grids pay more.</p><p class="con">− Carbon harms everyone, not just the village, so it is a weak case for a local payment.</p></div>
+        <div class="ap"><h3>A target per household</h3><p class="formula">rate = £ per household × households ÷ site MW</p>
+          <p class="pro">+ Easy for residents to understand.</p><p class="con">− Depends on how the benefit area is drawn.</p></div>
+      </div>
+      <p class="ex" id="x-rate"></p>
+    </li>
+    <li>
+      <h2>Work out the yearly levy and what each household gets</h2>
+      <p class="formula">annual levy = rate × site MW &nbsp;·&nbsp; per household = annual levy ÷ households</p>
+      <p class="ex" id="x-levy"></p>
+      <p class="src">Funds are usually spent on local projects rather than paid to homes; the per-household figure is a way to judge size. <span class="sure s2">●●○ estimate</span></p>
+    </li>
+    <li>
+      <h2>Add it up over the agreement</h2>
+      <p>Levies are usually index-linked, so each year's payment rises. The total is the sum of every year, plus any one-off payments.</p>
+      <p class="formula">lifetime = levy × (1 + rise)⁰ + levy × (1 + rise)¹ + … for every year, + one-off items</p>
+      <p class="ex" id="x-life"></p>
+    </li>
+    <li>
+      <h2>Add one-off items where they apply</h2>
+      <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px">
+        <li><b>New substation:</b> £530,000, and <b>new overhead line:</b> £200,000 per km, from government guidance on community funds for transmission (2025). <span class="sure s3">●●●</span></li>
+        <li><b>Biodiversity:</b> if habitat must be bought as statutory credits, the cost is units × 2 credits × the price for that habitat tier (£42,000 to £650,000 per credit, Defra). We suggest asking for the gain to be delivered locally instead. <span class="sure s3">●●●</span></li>
+      </ul>
+    </li>
+    <li>
+      <h2>Judge the whole deal, not just the levy</h2>
+      <p>The calculator's checklist scores ten things a strong agreement usually includes: a levy of at least £5,000 per MW, waste heat for local homes, local hiring, water limits, noise limits, public reporting, local biodiversity gain, brownfield land, new renewable power and residents helping to spend the fund. Seven or more is a strong deal. This is our checklist, not a legal test. <span class="sure s1">●○○ rough</span></p>
+    </li>
+  </ol>
+
+  <section class="panel">
+    <h2>What the calculation leaves out</h2>
+    <ul>
+      <li><b>Marginal carbon.</b> We use average grid carbon; a big new load mostly adds gas power, so emissions are likely higher.</li>
+      <li><b>Embodied carbon.</b> Building the site and making its servers emits carbon too. It is not counted.</li>
+      <li><b>Water at power stations.</b> Only water used on site is counted; no UK figure for power-station water has been sourced.</li>
+      <li><b>Business rates.</b> Data centres pay business rates, part of which councils keep. They are separate from the levy and not modelled.</li>
+      <li><b>What MW means.</b> Developers quote IT load, grid connection or campus build-out. Check which, or the levy will be off.</li>
+      <li><b>Local harms.</b> Noise, landscape and heritage harm are listed on the calculator but not priced. They are reasons to ask for more, not a formula.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Every number and where it comes from</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Input</th><th>Value</th><th>Source</th><th>Confidence</th></tr></thead>
+      <tbody>
+        <tr><td>Hours in a year</td><td class="n">8,760</td><td>–</td><td><span class="sure s3">●●●</span></td></tr>
+        <tr><td>Load factor</td><td class="n">55% (40–80%)</td><td>IEA via Congressional Research Service R48646</td><td><span class="sure s1">●○○</span></td></tr>
+        <tr><td>PUE</td><td class="n">1.3 (1.06–1.6)</td><td>UK Data Centre Covenant; EU and Google reporting</td><td><span class="sure s2">●●○</span></td></tr>
+        <tr><td>Grid carbon</td><td class="n">5–260 g per kWh by region</td><td>NESO Carbon Intensity API, CC BY 4.0</td><td><span class="sure s2">●●○</span></td></tr>
+        <tr><td>Carbon value</td><td class="n">£132 / £264 / £396 per t</td><td>DESNZ greenhouse gas valuation, 2026</td><td><span class="sure s3">●●●</span></td></tr>
+        <tr><td>On-site water</td><td class="n">2.09 / 1.16 / 0.05 L per kWh</td><td>Alston, Love &amp; Haider 2026, one modelled US site</td><td><span class="sure s1">●○○</span></td></tr>
+        <tr><td>Wind and solar benchmarks</td><td class="n">£5,000 / £700 per MW a year</td><td>DESNZ Energy Independence Bill factsheet, Nov 2026</td><td><span class="sure s3">●●●</span></td></tr>
+        <tr><td>Substation, overhead line</td><td class="n">£530,000; £200,000 per km</td><td>DESNZ community funds for transmission, 2025</td><td><span class="sure s3">●●●</span></td></tr>
+        <tr><td>Biodiversity credits</td><td class="n">2 per unit; £42k–£650k each</td><td>Defra statutory credit prices</td><td><span class="sure s3">●●●</span></td></tr>
+        <tr><td>UK projects</td><td class="n">40 with a published MW</td><td>UK Data Centre Tracker (no licence stated)</td><td><span class="sure s2">●●○</span></td></tr>
+      </tbody></table></div>
+    <p class="src">Every input is in the hackathon dataset, data-centre-impacts.xlsx, where each row cites its source.</p>
+  </section>
+
+  <div class="cta"><span>Ready to try a real proposal?</span><a href="levy.html">Open the levy calculator →</a><a href="residents.html">See what it means for a household →</a></div>
+</main>
+
+<script>
+const REGIONS = [{"id": 1, "name": "North Scotland", "mean": 6.0}, {"id": 2, "name": "South Scotland", "mean": 5.3}, {"id": 3, "name": "North West England", "mean": 40.4}, {"id": 4, "name": "North East England", "mean": 22.0}, {"id": 5, "name": "Yorkshire", "mean": 111.1}, {"id": 6, "name": "North Wales & Merseyside", "mean": 69.3}, {"id": 7, "name": "South Wales", "mean": 259.5}, {"id": 8, "name": "West Midlands", "mean": 112.1}, {"id": 9, "name": "East Midlands", "mean": 171.3}, {"id": 10, "name": "East England", "mean": 128.6}, {"id": 11, "name": "South West England", "mean": 256.6}, {"id": 12, "name": "South England", "mean": 172.6}, {"id": 13, "name": "London", "mean": 146.0}, {"id": 14, "name": "South East England", "mean": 158.9}];
+const $ = id => document.getElementById(id);
+const num = (v, d = 0) => Number(v).toLocaleString('en-GB', { maximumFractionDigits: d });
+const sig = (v, n = 3) => { if (!v) return '0'; const d = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.abs(v))) + 1 - n)); return num(Math.round(v / d) * d); };
+const gbp = v => { const a = Math.abs(v); if (a >= 1e9) return '£' + (v / 1e9).toFixed(1) + 'bn'; if (a >= 1e6) return '£' + (v / 1e6).toFixed(a >= 1e7 ? 1 : 2) + 'm'; if (a >= 1e4) return '£' + num(Math.round(v / 1000)) + 'k'; return '£' + num(Math.round(v)); };
+$('w-reg').innerHTML = REGIONS.map(r => `<option value="${r.id}" ${/South England/.test(r.name) ? 'selected' : ''}>${r.name} · ${num(r.mean)} g</option>`).join('');
+function run() {
+  const mw = Math.max(1, +$('w-mw').value || 1), lf = +$('w-lf').value / 100, reg = REGIONS.find(r => r.id === +$('w-reg').value);
+  const rate = Math.max(0, +$('w-rate').value || 0), hh = Math.max(1, +$('w-hh').value || 1), yrs = Math.max(1, +$('w-yr').value || 1), rise = Math.max(0, +$('w-idx').value || 0) / 100;
+  $('w-lfo').textContent = Math.round(lf * 100) + '%';
+  const mwh = mw * 8760 * lf, co2 = mwh * reg.mean / 1000, cost = co2 * 264, levy = rate * mw;
+  let life = 0; for (let t = 0; t < yrs; t++) life += levy * Math.pow(1 + rise, t);
+  $('x-elec').innerHTML = `Example: ${num(mw)} MW × 8,760 × ${Math.round(lf * 100)}% = <b>${num(mwh / 1000)} GWh</b> a year, as much as about ${num(Math.round(mwh * 1000 / 2700 / 1000) * 1000)} homes. At 40–80% load: ${num(mw * 8760 * 0.4 / 1000)}–${num(mw * 8760 * 0.8 / 1000)} GWh.`;
+  $('x-co2').innerHTML = `Example: ${num(mwh / 1000)} GWh × ${num(reg.mean)} g per kWh (${reg.name}) = <b>${sig(co2)} t CO₂</b> a year.`;
+  $('x-cost').innerHTML = `Example: ${sig(co2)} t × £264 = <b>${gbp(cost)}</b> a year. With the low and high values: ${gbp(co2 * 132)} to ${gbp(co2 * 396)}.`;
+  $('x-rate').innerHTML = `Example: at £${num(rate)} per MW, the levy covers ${cost > 0 ? (levy / cost * 100).toFixed(1) : '0'}% of the carbon cost. Covering 10% would need £${num(Math.round(cost * 0.1 / mw / 10) * 10)} per MW; £150 per household would need £${num(Math.round(150 * hh / mw / 10) * 10)} per MW.`;
+  $('x-levy').innerHTML = `Example: £${num(rate)} × ${num(mw)} MW = <b>${gbp(levy)}</b> a year, or <b>${gbp(levy / hh)}</b> for each of ${num(hh)} households.`;
+  $('x-life').innerHTML = `Example: ${gbp(levy)} a year for ${yrs} years, rising ${num(rise * 100, 1)}% a year = <b>${gbp(life)}</b> in total.`;
+}
+document.querySelectorAll('.try input, .try select').forEach(el => el.addEventListener('input', run));
+run();
+</script>
+</body>
+</html>
