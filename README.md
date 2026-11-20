@@ -40,7 +40,11 @@ Known gaps: grid carbon is an average, not the marginal (usually gas) power a ne
 
 ## Image credit
 
-Satellite map: [Sentinel-2 cloudless 2024](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). The tiles are stitched into one image (`palace-satellite.jpg`), which is shared under the same licence. The data centre campus is drawn over it in the browser; its layout is illustrative.
+Satellite map: [Sentinel-2 cloudless 2024](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). The tiles are stitched into one image (`palace-satellite.jpg`), which is shared under the same licence.
+
+Sharper detail around the palace (`palace-detail.jpg`): the satellite colour above, sharpened with the Environment Agency's LiDAR Composite DSM 1 m hillshade. Contains Environment Agency information © Environment Agency and/or database right, [Open Government Licence v3](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). The combined image is shared under CC BY-NC-SA 4.0.
+
+The data centre campus is drawn over the map, partly see-through, in the browser; its layout is illustrative.
 
 ## Not advice
 

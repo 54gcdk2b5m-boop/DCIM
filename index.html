@@ -367,7 +367,7 @@ footer td.n{font-family:var(--mono);white-space:nowrap}
     <div class="presets" id="pk-presets"></div>
     <h3 class="cmp-h">The biggest, in the UK and the US</h3>
     <div class="cmp" id="pk-cmp"></div>
-    <p class="note">Site area uses about <span data-stat="haPerMW"></span> hectares per MW, the average of four UK campuses that publish both land and MW (range <span data-stat="haRange"></span>), unless a site's own land area is published. Floor space uses <span data-stat="floorRatio"></span> per MW from <span data-stat="nFloor"></span> UK sites. The campus is drawn to the map's scale: its fenced plot matches the site area, with one data hall for about every 30 MW, a substation, a car park and a yard of backup generators beside each hall. The layout is illustrative, not a real design. Buckingham Palace and its garden cover 16 ha (39 acres, Royal Collection Trust). Satellite image: <a href="https://s2maps.eu">Sentinel-2 cloudless 2024</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>; at 10 m per pixel it shows parks and streets, not individual buildings. US figures are total power and land reported by the developers and press: Stargate Abilene 1.2 GW on 875–1,100 acres (Crusoe, R&amp;D World); Meta Hyperion 5 GW planned on about 3,650 acres (Meta; land from Meta's purchases as reported). US average from S03 in the dataset.</p>
+    <p class="note">Site area uses about <span data-stat="haPerMW"></span> hectares per MW, the average of four UK campuses that publish both land and MW (range <span data-stat="haRange"></span>), unless a site's own land area is published. Floor space uses <span data-stat="floorRatio"></span> per MW from <span data-stat="nFloor"></span> UK sites. The campus is drawn to the map's scale: its fenced plot matches the site area, with one data hall for about every 30 MW, a substation, a car park and a yard of backup generators beside each hall. The layout is illustrative, not a real design. Buckingham Palace and its garden cover 16 ha (39 acres, Royal Collection Trust). Imagery: colour from <a href="https://s2maps.eu">Sentinel-2 cloudless 2024</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024, <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>), sharpened around the palace with the Environment Agency's 1 m LiDAR surface model (contains Environment Agency information © Environment Agency and/or database right, <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open Government Licence</a>). Further out, the map is the 10 m satellite image alone. The campus is drawn see-through so the map shows beneath it. US figures are total power and land reported by the developers and press: Stargate Abilene 1.2 GW on 875–1,100 acres (Crusoe, R&amp;D World); Meta Hyperion 5 GW planned on about 3,650 acres (Meta; land from Meta's purchases as reported). US average from S03 in the dataset.</p>
   </div>
 </section>
 
@@ -1456,7 +1456,8 @@ new MutationObserver(themeChange).observe(document.documentElement, { attributes
   // Satellite mosaic: 11 x 9 Web Mercator tiles at zoom 15 (Sentinel-2 cloudless 2024), so one pixel is
   // 156,543 m x cos(latitude) / 2^15 = about 2.97 m on the ground at 51.5 degrees north.
   const MPP = 156543.034 * Math.cos(51.5014 * Math.PI / 180) / 2 ** 15;
-  const IW = 2816, IH = 2304, PX = 1301, PY = 1043;           // mosaic size, and the palace's position in it
+  const IW = 2816, IH = 2304, PX = 1278, PY = 1062;           // mosaic size, and the palace's position in it (checked against LiDAR)
+  const DX = 678, DY = 629, DW = 1200, DH = 866;               // where the sharper LiDAR-detailed image sits, in mosaic pixels
   const VW = 960, VH = 560, MIN = 5, MAX = 2000;
   const input = document.getElementById("pk-mw");
   const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1464,7 +1465,8 @@ new MutationObserver(themeChange).observe(document.documentElement, { attributes
   svg.append("rect").attr("width", VW).attr("height", VH).attr("rx", 6).attr("fill", "var(--sunk)");
   const g = svg.append("g");
   g.append("image").attr("href", "palace-satellite.jpg").attr("width", IW).attr("height", IH).attr("preserveAspectRatio", "none");
-  const gDC = g.append("g").attr("class", "dc");
+  g.append("image").attr("href", "palace-detail.jpg").attr("x", DX).attr("y", DY).attr("width", DW).attr("height", DH).attr("preserveAspectRatio", "none");
+  const gDC = g.append("g").attr("class", "dc").attr("opacity", 0.68);
   const LAB = [
     { t: "Buckingham Palace", x: PX, y: PY, pin: true },
     { t: "Green Park", x: 1205, y: 945 },
@@ -1482,7 +1484,7 @@ new MutationObserver(themeChange).observe(document.documentElement, { attributes
   const siteT = g.append("text").attr("text-anchor", "middle").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.75)").attr("paint-order", "stroke")
     .style("font-family", "var(--body)").style("font-weight", 700);
   svg.append("text").attr("x", VW - 8).attr("y", VH - 8).attr("text-anchor", "end").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.65)")
-    .attr("stroke-width", 3).attr("paint-order", "stroke").style("font-size", "10.5px").text("Sentinel-2 cloudless 2024 by EOX (modified Copernicus Sentinel data 2024), CC BY-NC-SA 4.0");
+    .attr("stroke-width", 3).attr("paint-order", "stroke").style("font-size", "10.5px").text("Imagery: Sentinel-2 cloudless 2024 by EOX, CC BY-NC-SA 4.0 · detail from Environment Agency LiDAR, OGL");
 
   // A data centre campus drawn as a site plan, in photo pixels, centred on (0,0)
   function drawCampus(mw, ha) {
