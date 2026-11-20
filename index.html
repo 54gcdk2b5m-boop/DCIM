@@ -114,6 +114,9 @@ p{margin:0}
 .ch{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--cost);margin:0 0 -4px}
 .ev-uk::before{content:"●●○ "} .ev-us::before,.ev-model::before{content:"●○○ "}
 .pk-stat .r{font-size:12px;color:var(--muted)}
+.dc-key{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--muted)}
+.dc-key span{display:inline-flex;align-items:center;gap:6px}
+.dc-key i{display:inline-block;width:14px;height:10px;border-radius:2px}
 
 /* ---------- 1. Size ---------- */
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
@@ -334,7 +337,7 @@ footer td.n{font-family:var(--mono);white-space:nowrap}
   <div class="sec-head">
     <p class="eyebrow">Section 1 · Data centre size</p>
     <h2 id="size-h">How big is a data centre?</h2>
-    <p>Data centres are sized in megawatts (MW): how much electricity their servers can draw, not how much land they cover. But more MW means more buildings, cooling plant and substations, so more land. Drag the slider to drop a site of that size onto central London, next to Buckingham Palace.</p>
+    <p>Data centres are sized in megawatts (MW): how much electricity their servers can draw, not how much land they cover. But more MW means more buildings, cooling plant and substations, so more land. Drag the slider to drop a data centre campus of that size onto central London, centred on Buckingham Palace. The map zooms out as the campus grows.</p>
   </div>
   <div class="facts">
     <div class="fact"><b data-stat="projMedian"></b><span>the average UK project with a published size</span></div>
@@ -344,7 +347,14 @@ footer td.n{font-family:var(--mono);white-space:nowrap}
   </div>
   <div class="panel">
     <div class="pk-top"><span class="pk-mw" id="pk-mwout">100 MW</span><p class="pk-say" id="pk-say"></p></div>
-    <div class="pk-svg" id="pk-svg" role="img" aria-label="A data centre site drawn to scale over an aerial photo of Buckingham Palace, Green Park and The Mall"></div>
+    <div class="pk-svg" id="pk-svg" role="img" aria-label="A data centre campus drawn to scale on a satellite map of central London, centred on Buckingham Palace"></div>
+    <div class="dc-key" aria-hidden="true">
+      <span><i style="background:#eef1f3;border:1px solid #1d262c"></i>Data halls, with cooling on the roof</span>
+      <span><i style="background:#3f4a53"></i><i style="background:#c2552f;margin-left:-4px"></i>Backup generators</span>
+      <span><i style="background:#a9b0b6;border:1px solid #1d262c"></i>Substation</span>
+      <span><i style="background:#6f7780"></i>Car park</span>
+      <span><i style="background:none;border:2px dashed #f2b33d"></i>Security fence</span>
+    </div>
     <div class="pk-stats" id="pk-stats"></div>
     <div>
       <p class="strip-l">Each grey dot is a UK project with a published size</p>
@@ -357,7 +367,7 @@ footer td.n{font-family:var(--mono);white-space:nowrap}
     <div class="presets" id="pk-presets"></div>
     <h3 class="cmp-h">The biggest, in the UK and the US</h3>
     <div class="cmp" id="pk-cmp"></div>
-    <p class="note">Site area uses about <span data-stat="haPerMW"></span> hectares per MW, the average of four UK campuses that publish both land and MW (range <span data-stat="haRange"></span>), unless a site's own land area is published. Floor space uses <span data-stat="floorRatio"></span> per MW from <span data-stat="nFloor"></span> UK sites. The orange square is the site's land, drawn to the photo's scale in the middle of the picture; the view zooms out when a site is bigger than the photo. The photo was taken from an airliner at a slight angle, so its scale (about 2.2 m per pixel, our estimate from the distance between the palace and the Victoria Memorial) is approximate. Buckingham Palace and its garden cover 16 ha (39 acres, Royal Collection Trust). Photo: <a href="https://commons.wikimedia.org/wiki/File:Buckingham_Palace_AerialView.jpg">Buckingham Palace AerialView</a> by Brendan and Ruth McCartney (2002), via Geograph and Wikimedia Commons, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>. US figures are total power and land reported by the developers and press: Stargate Abilene 1.2 GW on 875–1,100 acres (Crusoe, R&amp;D World); Meta Hyperion 5 GW planned on about 3,650 acres (Meta; land from Meta's purchases as reported). US average from S03 in the dataset.</p>
+    <p class="note">Site area uses about <span data-stat="haPerMW"></span> hectares per MW, the average of four UK campuses that publish both land and MW (range <span data-stat="haRange"></span>), unless a site's own land area is published. Floor space uses <span data-stat="floorRatio"></span> per MW from <span data-stat="nFloor"></span> UK sites. The campus is drawn to the map's scale: its fenced plot matches the site area, with one data hall for about every 30 MW, a substation, a car park and a yard of backup generators beside each hall. The layout is illustrative, not a real design. Buckingham Palace and its garden cover 16 ha (39 acres, Royal Collection Trust). Satellite image: <a href="https://s2maps.eu">Sentinel-2 cloudless 2024</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>; at 10 m per pixel it shows parks and streets, not individual buildings. US figures are total power and land reported by the developers and press: Stargate Abilene 1.2 GW on 875–1,100 acres (Crusoe, R&amp;D World); Meta Hyperion 5 GW planned on about 3,650 acres (Meta; land from Meta's purchases as reported). US average from S03 in the dataset.</p>
   </div>
 </section>
 
@@ -1438,43 +1448,81 @@ new MutationObserver(themeChange).observe(document.documentElement, { attributes
 </script>
 
 <script>
-// ===================== Section 1: size on an aerial photo of Buckingham Palace =====================
+// ===================== Section 1: size on a satellite map around Buckingham Palace =====================
 (() => {
   const PAL_HA = 16, PITCH_HA = 105 * 68 / 1e4, ACRE_HA = 0.404686;
   const LAND_LO = d3.min(LANDUSE, l => l.ha / l.mw), LAND_HI = d3.max(LANDUSE, l => l.ha / l.mw);
   const FLOOR_LO = d3.min(FLOOR, f => f.m2 / f.mw), FLOOR_HI = d3.max(FLOOR, f => f.m2 / f.mw);
-  // Photo scale, estimated from the distance between the palace and the Victoria Memorial: metres per photo pixel.
-  // The photo was taken at a slight angle, so treat the scale as approximate (about ±15%).
-  const MPP = 2.2, IW = 640, IH = 398, PX = 300, PY = 178;   // photo size, and the palace's position in it
-  const SX = IW / 2, SY = IH / 2;                             // the site square sits in the middle of the photo
+  // Satellite mosaic: 11 x 9 Web Mercator tiles at zoom 15 (Sentinel-2 cloudless 2024), so one pixel is
+  // 156,543 m x cos(latitude) / 2^15 = about 2.97 m on the ground at 51.5 degrees north.
+  const MPP = 156543.034 * Math.cos(51.5014 * Math.PI / 180) / 2 ** 15;
+  const IW = 2816, IH = 2304, PX = 1301, PY = 1043;           // mosaic size, and the palace's position in it
   const VW = 960, VH = 560, MIN = 5, MAX = 2000;
   const input = document.getElementById("pk-mw");
   const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const svg = d3.select("#pk-svg").append("svg").attr("viewBox", `0 0 ${VW} ${VH}`);
+  const svg = d3.select("#pk-svg").append("svg").attr("viewBox", `0 0 ${VW} ${VH}`).style("border-radius", "6px").style("overflow", "hidden");
   svg.append("rect").attr("width", VW).attr("height", VH).attr("rx", 6).attr("fill", "var(--sunk)");
   const g = svg.append("g");
-  g.append("image").attr("href", "palace-aerial-open.jpg").attr("width", IW).attr("height", IH).attr("preserveAspectRatio", "none");
-  g.append("rect").attr("width", IW).attr("height", IH).attr("fill", "none").attr("stroke", "var(--line)").attr("vector-effect", "non-scaling-stroke");
-  const sq = g.append("rect").attr("x", SX).attr("y", SY).attr("width", 0).attr("height", 0)
-    .attr("fill", "#f2b33d").attr("fill-opacity", 0.5).attr("stroke", "#fff").attr("stroke-width", 2.5).attr("vector-effect", "non-scaling-stroke");
-  // place labels on the photo (photo pixels), white text with a dark halo so they read on the image
+  g.append("image").attr("href", "palace-satellite.jpg").attr("width", IW).attr("height", IH).attr("preserveAspectRatio", "none");
+  const gDC = g.append("g").attr("class", "dc");
   const LAB = [
-    { t: "Buckingham Palace", x: PX - 30, y: PY + 78, a: "end" },
-    { t: "The Mall", x: 520, y: 322, rot: 34, a: "middle" },
-    { t: "Green Park", x: 500, y: 95, a: "middle" },
-    { t: "St James's Park", x: 385, y: 338, rot: 30, a: "middle" }
+    { t: "Buckingham Palace", x: PX, y: PY, pin: true },
+    { t: "Green Park", x: 1205, y: 945 },
+    { t: "St James's Park", x: 1470, y: 1000 },
+    { t: "The Mall", x: 1455, y: 955, rot: -30 },
+    { t: "Hyde Park", x: 760, y: 800 },
+    { t: "River Thames", x: 1790, y: 1180, rot: -72 }
   ];
-  const labs = g.selectAll("text.plab").data(LAB).join("text").attr("class", "plab")
-    .attr("x", d => d.x).attr("y", d => d.y).attr("text-anchor", d => d.a)
-    .attr("transform", d => d.rot ? `rotate(${d.rot},${d.x},${d.y})` : null)
-    .style("fill", "#fff").attr("stroke", "rgba(0,0,0,.65)").attr("paint-order", "stroke")
+  const labs = g.selectAll("text.plab").data(LAB.filter(d => !d.pin)).join("text").attr("class", "plab")
+    .attr("text-anchor", "middle").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.7)").attr("paint-order", "stroke")
     .style("font-family", "var(--body)").style("font-weight", 600).text(d => d.t);
   const pin = g.append("circle").attr("cx", PX).attr("cy", PY).attr("fill", "#fff").attr("stroke", "#000").attr("vector-effect", "non-scaling-stroke");
-  const pinL = g.append("line").attr("x1", PX).attr("y1", PY).attr("x2", PX - 26).attr("y2", PY + 70).attr("stroke", "#fff").attr("stroke-width", 1.5).attr("vector-effect", "non-scaling-stroke");
-  const siteT = g.append("text").attr("text-anchor", "middle").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.7)").attr("paint-order", "stroke")
+  const pinT = g.append("text").attr("text-anchor", "start").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.75)").attr("paint-order", "stroke")
+    .style("font-family", "var(--body)").style("font-weight", 700).text("Buckingham Palace");
+  const siteT = g.append("text").attr("text-anchor", "middle").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.75)").attr("paint-order", "stroke")
     .style("font-family", "var(--body)").style("font-weight", 700);
-  svg.append("text").attr("x", VW - 10).attr("y", 18).attr("text-anchor", "end").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.6)")
-    .attr("stroke-width", 3).attr("paint-order", "stroke").style("font-size", "11px").text("Photo: Brendan and Ruth McCartney, CC BY-SA 2.0");
+  svg.append("text").attr("x", VW - 8).attr("y", VH - 8).attr("text-anchor", "end").style("fill", "#fff").attr("stroke", "rgba(0,0,0,.65)")
+    .attr("stroke-width", 3).attr("paint-order", "stroke").style("font-size", "10.5px").text("Sentinel-2 cloudless 2024 by EOX (modified Copernicus Sentinel data 2024), CC BY-NC-SA 4.0");
+
+  // A data centre campus drawn as a site plan, in photo pixels, centred on (0,0)
+  function drawCampus(mw, ha) {
+    const side = Math.sqrt(ha * 1e4) / MPP, W = side * 1.25, H = side / 1.25;
+    gDC.selectAll("*").remove();
+    const R = (x, y, w, h, fill, extra = {}) => { const r = gDC.append("rect").attr("x", x).attr("y", y).attr("width", Math.max(0, w)).attr("height", Math.max(0, h)).attr("fill", fill);
+      for (const [k, v] of Object.entries(extra)) r.attr(k, v); return r; };
+    const thin = { stroke: "#1d262c", "stroke-width": 0.8, "vector-effect": "non-scaling-stroke" };
+    // plot, ring road and security fence
+    R(-W / 2, -H / 2, W, H, "#cfd5c4", { "fill-opacity": 0.92 });
+    R(-W / 2 + W * 0.03, -H / 2 + H * 0.04, W * 0.94, H * 0.92, "none", { stroke: "#8b9196", "stroke-width": Math.max(1.5, side * 0.012) });
+    R(-W / 2, -H / 2, W, H, "none", { stroke: "#f2b33d", "stroke-width": 2.5, "stroke-dasharray": "6 4", "vector-effect": "non-scaling-stroke" });
+    // left service strip: substation at the top, car park at the bottom
+    const sx = -W / 2 + W * 0.06, sw = W * 0.15;
+    const subH = H * 0.34, subY = -H / 2 + H * 0.08;
+    R(sx, subY, sw, subH, "#a9b0b6", thin);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++)
+      R(sx + sw * (0.12 + i * 0.28), subY + subH * (0.08 + j * 0.23), sw * 0.18, subH * 0.13, "#5d6670");
+    const cpY = -H / 2 + H * 0.52, cpH = H * 0.38;
+    R(sx, cpY, sw, cpH, "#6f7780", thin);
+    for (let j = 1; j < 6; j++) gDC.append("line").attr("x1", sx + sw * 0.1).attr("x2", sx + sw * 0.9).attr("y1", cpY + cpH * j / 6).attr("y2", cpY + cpH * j / 6)
+      .attr("stroke", "#dfe3e6").attr("stroke-width", 0.6).attr("vector-effect", "non-scaling-stroke");
+    // data halls in a grid; one hall per ~30 MW, each with rooftop cooling and a generator yard
+    const n = Math.max(1, Math.round(mw / 30));
+    const rx = -W / 2 + W * 0.25, rw = W * 0.69, ry = -H / 2 + H * 0.08, rh = H * 0.84;
+    const c = Math.max(1, Math.ceil(Math.sqrt(n * (rw / rh) / 2))), r = Math.ceil(n / c);
+    const cw = rw / c, ch = rh / r;
+    for (let i = 0; i < n; i++) {
+      const col = i % c, row = Math.floor(i / c);
+      const hx = rx + col * cw + cw * 0.08, hy = ry + row * ch + ch * 0.06, hw = cw * 0.84, hh = ch * 0.58;
+      R(hx, hy, hw, hh, "#eef1f3", thin);
+      const units = Math.max(3, Math.min(12, Math.round(hw / Math.max(hh * 0.22, 1))));
+      for (let u = 0; u < units; u++) R(hx + hw * (0.05 + u * 0.9 / units), hy + hh * 0.1, hw * 0.9 / units * 0.7, hh * 0.18, "#b8c1c8");
+      const gy = hy + hh + ch * 0.06, gh = ch * 0.16;
+      R(hx, gy, hw, gh, "#3f4a53", thin);
+      const gens = Math.max(3, Math.min(14, Math.round(hw / Math.max(gh, 1))));
+      for (let u = 0; u < gens; u++) R(hx + hw * (0.04 + u * 0.92 / gens), gy + gh * 0.2, hw * 0.92 / gens * 0.6, gh * 0.6, "#c2552f", { "fill-opacity": 0.9 });
+    }
+    return { W, H, side };
+  }
   // Slider: linear MW, with UK projects stacked above it as a dot plot
   const pos = mw => (Math.min(MAX, Math.max(MIN, mw)) - MIN) / (MAX - MIN);
   const at = p => `calc(${p * 100}% - ${p * 16}px + 8px)`;
@@ -1503,18 +1551,22 @@ new MutationObserver(themeChange).observe(document.documentElement, { attributes
     const ha = o.ha ?? mw * HA_PER_MW, n = ha / PAL_HA;
     const homes = mw * HOURS * REF.lf * REF.pue * 1000 / HOME_KWH;
     const T = (dur && !reduce()) ? dur : 0, tr = sel => T ? sel.transition().duration(T).ease(d3.easeCubicOut) : sel;
-    // the site as a square centred on the palace, at the photo's scale; zoom out when it outgrows the photo
-    const side = Math.sqrt(ha * 1e4) / MPP;
-    const x0 = Math.min(0, SX - side / 2), x1 = Math.max(IW, SX + side / 2), y1 = Math.max(IH, SY + side / 2);
-    let y0 = Math.min(0, SY - side / 2); y0 -= (y1 - y0) * 0.07;   // room above for the site's label
-    const bw = x1 - x0, bh = y1 - y0, k = Math.min(VW / bw, VH / bh);
-    const tx = (VW - bw * k) / 2 - x0 * k, ty = (VH - bh * k) / 2 - y0 * k;
-    tr(g).attr("transform", `translate(${tx},${ty}) scale(${k})`);
-    tr(sq).attr("x", SX - side / 2).attr("y", SY - side / 2).attr("width", side).attr("height", side);
-    tr(labs).style("font-size", (13 / k) + "px").attr("stroke-width", 3 / k);
-    tr(pin).attr("r", 4 / k);
-    tr(siteT).attr("x", SX).attr("y", SY - side / 2 - 10 / k).style("font-size", (14 / k) + "px").attr("stroke-width", 3.5 / k);
-    siteT.text(`${o.name || "Data centre site"} · ${num(ha, ha < 10 ? 1 : 0)} ha`);
+    const { W, H } = drawCampus(mw, ha);
+    gDC.attr("transform", `translate(${PX},${PY})`);
+    // zoom so the campus fills about 40% of the view's width, never closer than about 1 km across
+    const viewW = Math.max(1000 / MPP, W * 2.5, H * 2.5 * VW / VH), k = VW / viewW;
+    const viewH = VH / k;
+    let cx = PX, cy = PY;
+    if (viewW <= IW) cx = Math.min(Math.max(cx, viewW / 2), IW - viewW / 2);
+    if (viewH <= IH) cy = Math.min(Math.max(cy, viewH / 2), IH - viewH / 2);
+    tr(g).attr("transform", `translate(${VW / 2 - cx * k},${VH / 2 - cy * k}) scale(${k})`);
+    tr(labs).attr("x", d => d.x).attr("y", d => d.y).attr("transform", d => d.rot ? `rotate(${d.rot},${d.x},${d.y})` : null)
+      .style("font-size", (13 / k) + "px").attr("stroke-width", 3 / k)
+      .attr("opacity", d => (Math.abs(d.x - PX) < W / 2 + 10 / k && Math.abs(d.y - PY) < H / 2 + 10 / k) ? 0 : 1);
+    tr(pin).attr("r", 4.5 / k);
+    tr(pinT).attr("x", PX + 9 / k).attr("y", PY + 4 / k).style("font-size", (13 / k) + "px").attr("stroke-width", 3.5 / k);
+    tr(siteT).attr("x", PX).attr("y", PY - H / 2 - 10 / k).style("font-size", (14 / k) + "px").attr("stroke-width", 3.5 / k);
+    siteT.text(`${o.name || "Data centre campus"} · ${num(ha, ha < 10 ? 1 : 0)} ha · ${Math.max(1, Math.round(mw / 30))} data hall${Math.round(mw / 30) > 1 ? "s" : ""}`);
     document.getElementById("pk-mwout").textContent = fmtMW(mw);
     const pitches = ha / PITCH_HA;
     document.getElementById("pk-say").textContent = (o.name ? o.name + " " + (o.verb || "would take") : "The site would take") + " up the ground of " +

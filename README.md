@@ -8,7 +8,7 @@ A toolkit for UK communities facing a proposed data centre. Built for the Oxford
 
 | Page | For | What it does |
 |---|---|---|
-| [Understand](index.html) | Everyone | How big data centres are (drawn over an aerial photo of Buckingham Palace), the four kinds of impact (economic, resource extraction, environmental, cultural), the variables that drive them, and a scrolling story through real UK projects. |
+| [Understand](index.html) | Everyone | How big data centres are (a campus drawn to scale on a satellite map around Buckingham Palace), the four kinds of impact (economic, resource extraction, environmental, cultural), the variables that drive them, and a scrolling story through real UK projects. |
 | [For residents](residents.html) | Households | A scenario calculator: generator noise at your home, bills, house prices, jobs, water, carbon in everyday terms, a culture and heritage check with a free-text box, and questions to ask at the planning meeting. |
 | [For councils](levy.html) | Councils and parish bodies | A levy calculator with three ways to set the rate, the working shown step by step, a "good deal" checklist, a draft letter, and an explorer of which choices move which impacts. |
 | [How it's calculated](methods.html) | Anyone checking the numbers | Every step of the levy calculation, with formulas, a live worked example, confidence marks and sources. |
@@ -40,7 +40,7 @@ Known gaps: grid carbon is an average, not the marginal (usually gas) power a ne
 
 ## Image credit
 
-Aerial photo of Buckingham Palace: [*Buckingham Palace AerialView*](https://commons.wikimedia.org/wiki/File:Buckingham_Palace_AerialView.jpg) by Brendan and Ruth McCartney (2002), via Geograph and Wikimedia Commons, licensed [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/). The file is used unmodified; the data centre square is drawn over it in the browser.
+Satellite map: [Sentinel-2 cloudless 2024](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024), licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/). The tiles are stitched into one image (`palace-satellite.jpg`), which is shared under the same licence. The data centre campus is drawn over it in the browser; its layout is illustrative.
 
 ## Not advice
 
