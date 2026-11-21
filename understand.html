@@ -126,7 +126,7 @@ p{margin:0}
 .pk-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
 .pk-mw{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,40px);color:var(--accent);font-variant-numeric:tabular-nums;min-width:4.5ch}
 .pk-say{font-size:16px;max-width:620px}
-.pk-svg svg{display:block;width:100%;height:auto;overflow:visible}
+.pk-svg svg{display:block;width:100%;height:auto;max-height:46vh;overflow:visible}
 .pk-svg text{font-family:var(--mono);font-size:12px;fill:var(--muted)}
 .pk-svg .t-fg{fill:var(--fg);font-family:var(--body);font-size:13px;font-weight:600}
 .pk-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -348,14 +348,6 @@ footer td.n{font-family:var(--mono);white-space:nowrap}
   <div class="panel">
     <div class="pk-top"><span class="pk-mw" id="pk-mwout">100 MW</span><p class="pk-say" id="pk-say"></p></div>
     <div class="pk-svg" id="pk-svg" role="img" aria-label="A data centre campus drawn to scale on a satellite map of central London, centred on Buckingham Palace"></div>
-    <div class="dc-key" aria-hidden="true">
-      <span><i style="background:#eef1f3;border:1px solid #1d262c"></i>Data halls, with cooling on the roof</span>
-      <span><i style="background:#3f4a53"></i><i style="background:#c2552f;margin-left:-4px"></i>Backup generators</span>
-      <span><i style="background:#a9b0b6;border:1px solid #1d262c"></i>Substation</span>
-      <span><i style="background:#6f7780"></i>Car park</span>
-      <span><i style="background:none;border:2px dashed #f2b33d"></i>Security fence</span>
-    </div>
-    <div class="pk-stats" id="pk-stats"></div>
     <div>
       <p class="strip-l">Each grey dot is a UK project with a published size</p>
       <div class="strip" id="pk-strip" aria-hidden="true"></div>
@@ -364,6 +356,14 @@ footer td.n{font-family:var(--mono);white-space:nowrap}
         <input id="pk-mw" type="range" min="5" max="2000" step="5" value="100"></div>
       <div class="ticks" id="pk-ticks"></div>
     </div>
+    <div class="dc-key" aria-hidden="true">
+      <span><i style="background:#eef1f3;border:1px solid #1d262c"></i>Data halls, with cooling on the roof</span>
+      <span><i style="background:#3f4a53"></i><i style="background:#c2552f;margin-left:-4px"></i>Backup generators</span>
+      <span><i style="background:#a9b0b6;border:1px solid #1d262c"></i>Substation</span>
+      <span><i style="background:#6f7780"></i>Car park</span>
+      <span><i style="background:none;border:2px dashed #f2b33d"></i>Security fence</span>
+    </div>
+    <div class="pk-stats" id="pk-stats"></div>
     <div class="presets" id="pk-presets"></div>
     <h3 class="cmp-h">The biggest, in the UK and the US</h3>
     <div class="cmp" id="pk-cmp"></div>
@@ -1458,7 +1458,7 @@ new MutationObserver(themeChange).observe(document.documentElement, { attributes
   const MPP = 156543.034 * Math.cos(51.5014 * Math.PI / 180) / 2 ** 15;
   const IW = 2816, IH = 2304, PX = 1278, PY = 1062;           // mosaic size, and the palace's position in it (checked against LiDAR)
   const DX = 678, DY = 629, DW = 1200, DH = 866;               // where the sharper LiDAR-detailed image sits, in mosaic pixels
-  const VW = 960, VH = 560, MIN = 5, MAX = 2000;
+  const VW = 960, VH = 400, MIN = 5, MAX = 2000;
   const input = document.getElementById("pk-mw");
   const reduce = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   const svg = d3.select("#pk-svg").append("svg").attr("viewBox", `0 0 ${VW} ${VH}`).style("border-radius", "6px").style("overflow", "hidden");
