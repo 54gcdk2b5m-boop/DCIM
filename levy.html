@@ -158,6 +158,24 @@ table.mx{border-collapse:collapse;width:100%;font-size:13.5px}
 @media (prefers-reduced-motion:reduce){.ctl,.m,.toc a{transition:none}}
 
 
+
+/* ---------- Run button and gate: results stay hidden until the button is pressed ---------- */
+.run{position:sticky;bottom:0;margin:4px -4px -4px;padding:12px 4px 4px;background:linear-gradient(to bottom,transparent,var(--surface) 30%);display:flex;flex-direction:column;gap:6px}
+button.go{font:inherit;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.01em;padding:12px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--surface);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
+button.go:hover{filter:brightness(1.08)}
+button.go[aria-busy="true"]{opacity:.75;cursor:progress}
+.run .hint{font-size:12px;color:var(--muted);text-align:center}
+.out.pre > :not(.gate){display:none!important}
+.out:not(.pre) > .gate{display:none}
+.gate{background:var(--surface);border:1px dashed var(--accent);border-radius:10px;padding:28px 24px;display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.gate .ico{font-size:34px;line-height:1}
+.gate h2{font-family:var(--display);font-size:22px;font-weight:800;margin:0}
+.gate p{color:var(--muted);max-width:520px}
+.gate button.go{width:auto}
+.gate.stale{border-color:var(--warn,#9a6a00)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
 </style>
 </head>
 <body>
@@ -235,9 +253,16 @@ table.mx{border-collapse:collapse;width:100%;font-size:13.5px}
       <label for="idx">Index-linked at (% a year)<input id="idx" type="number" min="0" max="10" step="0.5" value="2"></label>
     </div>
   </fieldset>
+  <div class="run"><button type="button" class="go" id="goBtn">▶ Calculate</button><span class="hint" id="goHint">Results appear when you press Calculate</span></div>
 </form>
 
-<div class="out">
+<div class="out pre">
+  <section class="gate" id="gate" aria-live="polite">
+    <span class="ico" aria-hidden="true">🧮</span>
+    <h2 id="gateH">Ready when you are</h2>
+    <p id="gateP">Set up the site and choose how to set the levy on the left. Then press Calculate to see the levy, the working and what to ask for.</p>
+    <button type="button" class="go" id="goBtn2">▶ Calculate</button>
+  </section>
   <section class="panel" aria-live="polite">
     <h3>Annual levy against the carbon cost</h3>
     <div class="headline"><span class="big" id="askBig">£0</span><p class="vs" id="vsText"></p></div>
@@ -557,6 +582,36 @@ $('copy').addEventListener('click', () => {
 
 if (cul >= 0) { $('proj').value = cul; applyProject(cul); }
 calc();
+
+// ---------- Run button: show the results only after it is pressed; hide them again when an input changes
+(() => {
+  const out = document.querySelector('.out'), form = document.getElementById('f');
+  const btns = [document.getElementById('goBtn'), document.getElementById('goBtn2')];
+  const VERB = 'Calculate';
+  let shown = false;
+  function run() {
+    btns.forEach(b => { b.setAttribute('aria-busy', 'true'); b.innerHTML = '<span class="spin" aria-hidden="true"></span> Running the model…'; });
+    setTimeout(() => {
+      calc();
+      out.classList.remove('pre'); shown = true;
+      btns.forEach(b => { b.removeAttribute('aria-busy'); b.textContent = '▶ ' + VERB + ' again'; });
+      document.getElementById('goHint').textContent = 'Results are up to date';
+      if (matchMedia('(max-width: 860px)').matches) out.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    }, 450);
+  }
+  function stale(e) {
+    if (!shown || (e && e.target && e.target.closest && !e.target.closest('#f'))) return;
+    shown = false; out.classList.add('pre');
+    const g = document.getElementById('gate'); g.classList.add('stale');
+    document.getElementById('gateH').textContent = 'Your inputs have changed';
+    document.getElementById('gateP').textContent = 'Press ' + VERB + ' to update the results.';
+    btns.forEach(b => b.textContent = '▶ ' + VERB);
+    document.getElementById('goHint').textContent = 'Inputs changed: press ' + VERB + ' to update';
+  }
+  btns.forEach(b => b.addEventListener('click', run));
+  form.addEventListener('input', stale);
+  form.addEventListener('change', stale);
+})();
 </script>
 
 <script>
