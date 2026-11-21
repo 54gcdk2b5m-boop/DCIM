@@ -8,7 +8,8 @@ A toolkit for UK communities facing a proposed data centre. Built for the Oxford
 
 | Page | For | What it does |
 |---|---|---|
-| [Understand](index.html) | Everyone | How big data centres are (a campus drawn to scale on a satellite map around Buckingham Palace), the four kinds of impact (economic, resource extraction, environmental, cultural), the variables that drive them, and a scrolling story through real UK projects. |
+| [Home](index.html) | Everyone | What the Data Centre Impact Model is (nine variables driving four types of impact, in an interactive figure), how the site is structured, and the key terms. |
+| [Understand](understand.html) | Everyone | How big data centres are (a campus drawn to scale on a satellite map around Buckingham Palace), the four kinds of impact (economic, resource extraction, environmental, cultural), the variables that drive them, and a scrolling story through real UK projects. |
 | [For residents](residents.html) | Households | A scenario calculator: generator noise at your home, bills, house prices, jobs, water, carbon in everyday terms, a culture and heritage check with a free-text box, and questions to ask at the planning meeting. |
 | [For councils](levy.html) | Councils and parish bodies | A levy calculator with three ways to set the rate, the working shown step by step, a "good deal" checklist, a draft letter, and an explorer of which choices move which impacts. |
 | [How it's calculated](methods.html) | Anyone checking the numbers | Every step of the levy calculation, with formulas, a live worked example, confidence marks and sources. |
